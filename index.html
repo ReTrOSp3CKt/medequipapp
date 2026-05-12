@@ -64,18 +64,6 @@
         .sync-status.offline {
             color: #ffb8b8;
         }
-        .sync-status .spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.6s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
 
         .med-tabs {
             display: flex;
@@ -158,20 +146,6 @@
             border-radius: 40px;
             font-size: 0.85rem;
             color: #0f5366;
-        }
-        .loading-spinner {
-            text-align: center;
-            padding: 40px;
-            color: #0f6b7c;
-        }
-        .loading-spinner .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #d4e3ea;
-            border-radius: 50%;
-            border-top-color: #0f6b7c;
-            animation: spin 0.6s linear infinite;
         }
 
         .equip-grid {
@@ -261,10 +235,6 @@
             background: #fad1d1;
             color: #a33b3b;
         }
-        .delete-equip:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
 
         .modal {
             display: none;
@@ -276,11 +246,6 @@
             height: 100%;
             background-color: rgba(0,0,0,0.5);
             backdrop-filter: blur(5px);
-            animation: fadeInModal 0.3s ease;
-        }
-        @keyframes fadeInModal {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
         .modal-content {
             background-color: #fff;
@@ -292,11 +257,6 @@
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
         }
         .modal-header {
             background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%);
@@ -319,11 +279,9 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            transition: 0.2s;
         }
         .close-modal:hover {
             background: rgba(255,255,255,0.3);
-            transform: scale(1.1);
         }
         .modal-body {
             padding: 24px;
@@ -411,10 +369,6 @@
             background: #0f6474;
             transform: scale(0.98);
         }
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
         .empty-state {
             text-align: center;
             background: #f4fbfe;
@@ -446,12 +400,12 @@
         <h1>MedEquip QR-паспорт</h1>
         <div class="med-sub">Генерация QR-кодов · учёт медицинской техники · сканируйте для просмотра карточки</div>
         <div class="sync-status" id="syncStatus">
-            <span>🔄</span> Проверка подключения к базе данных...
+            🔄 Проверка подключения...
         </div>
     </div>
 
     <div class="med-tabs">
-        <button class="tab-btn active" data-tabname="view">📋 Оборудование & QR</button>
+        <button class="tab-btn active" data-tabname="view">📋 Оборудование и QR</button>
         <button class="tab-btn" data-tabname="add">✚ Опросник · Добавить</button>
     </div>
 
@@ -532,40 +486,47 @@
 
 <script>
 // ============================================
-// КОНФИГУРАЦИЯ БАЗЫ ДАННЫХ
+// КОНФИГУРАЦИЯ - ВАЖНО: ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШУ!
 // ============================================
-
-const API_URL = 'https://medequipapp.onrender.com;  // Автоматически подставится на сервере
+// Получите URL вашего API на Render и вставьте его сюда:
+// Например: const API_URL = 'https://medequip-api.onrender.com/api/equipment';
+const API_URL = 'https://medequipapp.onrender.com/api/equipment';
 
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 
-let isOnline = true;
 let currentDevices = [];
+let isLoading = false;
 
 // ===== Функции работы с API =====
 async function fetchAllEquipment() {
+    if (isLoading) return currentDevices;
+    isLoading = true;
+    
     try {
-        const response = await fetch(API_URL);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(API_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
         if (!response.ok) throw new Error('Network error');
         const data = await response.json();
-        isOnline = true;
-        updateSyncStatus(true);
         currentDevices = data;
-        // Сохраняем копию для оффлайн-режима
+        updateSyncStatus(true);
         localStorage.setItem('med_equipment_backup', JSON.stringify(data));
         return data;
     } catch (error) {
-        console.error('Error fetching data:', error);
-        isOnline = false;
+        console.error('Error:', error);
         updateSyncStatus(false);
         
-        // Fallback на сохраненную копию
         const backupData = localStorage.getItem('med_equipment_backup');
         if (backupData) {
             currentDevices = JSON.parse(backupData);
             return currentDevices;
         }
         return [];
+    } finally {
+        isLoading = false;
     }
 }
 
@@ -578,63 +539,50 @@ async function addEquipmentToDB(device) {
         });
         if (!response.ok) throw new Error('Add failed');
         const savedDevice = await response.json();
-        isOnline = true;
-        updateSyncStatus(true);
-        
-        // Обновляем локальную копию
         currentDevices = [savedDevice, ...currentDevices];
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
+        updateSyncStatus(true);
         return savedDevice;
     } catch (error) {
-        console.error('Error adding device:', error);
-        isOnline = false;
+        console.error('Add error:', error);
         updateSyncStatus(false);
-        
-        // Сохраняем локально для оффлайн-режима
         device.id = device.id || generateId();
         device.offlineMode = true;
         currentDevices = [device, ...currentDevices];
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
-        throw new Error('⚠️ Оффлайн-режим: данные сохранены локально. При восстановлении связи данные будут синхронизированы.');
+        throw new Error('Оффлайн-режим: данные сохранены локально');
     }
 }
 
 async function deleteEquipmentFromDB(id) {
     try {
-        const response = await fetch(`${API_URL}/${id}`, {
-            method: 'DELETE'
-        });
+        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (!response.ok && response.status !== 404) throw new Error('Delete failed');
         
         currentDevices = currentDevices.filter(d => d.id != id);
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
-        isOnline = true;
         updateSyncStatus(true);
         return true;
     } catch (error) {
-        console.error('Error deleting device:', error);
-        isOnline = false;
+        console.error('Delete error:', error);
         updateSyncStatus(false);
-        
-        // Помечаем для удаления
         currentDevices = currentDevices.filter(d => d.id != id);
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
-        throw new Error('⚠️ Оффлайн-режим: удаление будет выполнено при восстановлении связи');
+        throw new Error('Оффлайн-режим: удаление будет выполнено позже');
     }
 }
 
 function updateSyncStatus(online) {
     const statusDiv = document.getElementById('syncStatus');
     if (online) {
-        statusDiv.innerHTML = '<span>✅</span> База данных подключена · данные синхронизируются';
+        statusDiv.innerHTML = '✅ База данных подключена · данные синхронизируются';
         statusDiv.className = 'sync-status online';
     } else {
-        statusDiv.innerHTML = '<span>⚠️</span> Оффлайн-режим · работа с локальной копией';
+        statusDiv.innerHTML = '⚠️ Оффлайн-режим · работа с локальной копией';
         statusDiv.className = 'sync-status offline';
     }
 }
 
-// ===== Функции для работы с UI =====
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -653,7 +601,7 @@ function generateQRCode(containerId, equipmentId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
-    const cardUrl = `${BASE_URL}?card=${encodeURIComponent(equipmentId)}`;
+    const cardUrl = BASE_URL + '?card=' + encodeURIComponent(equipmentId);
     try {
         new QRCode(container, {
             text: cardUrl,
@@ -664,8 +612,7 @@ function generateQRCode(containerId, equipmentId) {
             correctLevel: QRCode.CorrectLevel.M
         });
     } catch (error) {
-        console.error('QR generation error:', error);
-        container.innerHTML = `<div style="text-align:center; color:red; font-size:12px;">Ошибка генерации</div>`;
+        container.innerHTML = '<div style="text-align:center; color:red; font-size:12px;">Ошибка генерации QR</div>';
     }
 }
 
@@ -685,7 +632,7 @@ function openEquipmentCard(equipmentId) {
             <div class="modal-detail-value"><strong>${escapeHtml(device.name)}</strong></div>
         </div>
         <div class="modal-detail-row">
-            <div class="modal-detail-label">👤 Отделение / Ответственный</div>
+            <div class="modal-detail-label">👤 Отделение</div>
             <div class="modal-detail-value">${escapeHtml(device.department || '—')}</div>
         </div>
         <div class="modal-detail-row">
@@ -705,16 +652,12 @@ function openEquipmentCard(equipmentId) {
             <div class="modal-detail-value">${escapeHtml(device.nextInspection || '—')}</div>
         </div>
         <div class="modal-detail-row">
-            <div class="modal-detail-label">📖 Руководство к использованию</div>
+            <div class="modal-detail-label">📖 Руководство</div>
             <div class="modal-detail-value">${escapeHtml(device.manual || '—')}</div>
         </div>
         <div class="modal-detail-row">
             <div class="modal-detail-label">📝 Заметки</div>
             <div class="modal-detail-value">${escapeHtml(device.notes || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">🕐 Дата создания карточки</div>
-            <div class="modal-detail-value">${escapeHtml(device.createdAt || '—')}</div>
         </div>
         <div class="qr-code-in-modal">
             <div style="font-size: 12px; color: #1c6a7c; margin-bottom: 8px;">QR-код для этой позиции:</div>
@@ -728,9 +671,8 @@ function openEquipmentCard(equipmentId) {
         const modalQR = document.getElementById('modalQRContainer');
         if (modalQR) {
             modalQR.innerHTML = '';
-            const shortUrl = `${BASE_URL}?card=${encodeURIComponent(equipmentId)}`;
             new QRCode(modalQR, {
-                text: shortUrl,
+                text: BASE_URL + '?card=' + encodeURIComponent(equipmentId),
                 width: 120,
                 height: 120,
                 colorDark: "#135f70",
@@ -746,8 +688,7 @@ function filterDevices(devices, searchTerm) {
     return devices.filter(device => {
         return (device.name && device.name.toLowerCase().includes(term)) ||
                (device.department && device.department.toLowerCase().includes(term)) ||
-               (device.serialNumber && device.serialNumber.toLowerCase().includes(term)) ||
-               (device.notes && device.notes.toLowerCase().includes(term));
+               (device.serialNumber && device.serialNumber.toLowerCase().includes(term));
     });
 }
 
@@ -756,22 +697,20 @@ async function renderEquipmentGrid() {
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput ? searchInput.value : '';
     
-    // Показываем загрузку
-    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><div style="margin-top: 12px;">Загрузка данных...</div></div>';
+    container.innerHTML = '<div class="empty-state">🔄 Загрузка данных...</div>';
     
-    // Загружаем актуальные данные
     const devices = await fetchAllEquipment();
     const filteredDevices = filterDevices(devices, searchTerm);
     const resultsCountSpan = document.getElementById('resultsCount');
     if (resultsCountSpan) {
-        resultsCountSpan.textContent = `Найдено: ${filteredDevices.length} из ${devices.length}`;
+        resultsCountSpan.textContent = 'Найдено: ' + filteredDevices.length + ' из ' + devices.length;
     }
 
     if (!filteredDevices.length) {
         if (devices.length === 0) {
-            container.innerHTML = `<div class="empty-state">🏥 Медицинское оборудование не найдено.<br>📌 Перейдите на вкладку «Опросник» и добавьте первую единицу техники.</div>`;
+            container.innerHTML = '<div class="empty-state">🏥 Медицинское оборудование не найдено.<br>📌 Перейдите на вкладку "Опросник" и добавьте первую единицу техники.</div>';
         } else {
-            container.innerHTML = `<div class="empty-state">🔍 Ничего не найдено.<br>Попробуйте изменить поисковый запрос.</div>`;
+            container.innerHTML = '<div class="empty-state">🔍 Ничего не найдено.<br>Попробуйте изменить поисковый запрос.</div>';
         }
         return;
     }
@@ -779,20 +718,18 @@ async function renderEquipmentGrid() {
     container.innerHTML = '';
     
     filteredDevices.forEach((device, idx) => {
-        const qrId = `qr_${device.id}_${idx}`;
+        const qrId = 'qr_' + device.id + '_' + idx;
         const cardDiv = document.createElement('div');
         cardDiv.className = 'equip-card';
         
-        cardDiv.addEventListener('click', (e) => {
+        cardDiv.addEventListener('click', function(e) {
             if (e.target.classList.contains('delete-equip')) return;
             openEquipmentCard(device.id);
         });
-
-        const offlineBadge = device.offlineMode ? '<span style="background:#ffd966; margin-left:8px; font-size:10px;">📱 Оффлайн</span>' : '';
         
         cardDiv.innerHTML = `
             <div class="card-header-med">
-                <h3>${escapeHtml(device.name)}${offlineBadge}</h3>
+                <h3>${escapeHtml(device.name)}</h3>
                 <div>
                     <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
                 </div>
@@ -808,13 +745,13 @@ async function renderEquipmentGrid() {
 
         container.appendChild(cardDiv);
         
-        setTimeout(() => {
+        setTimeout(function() {
             generateQRCode(qrId, device.id);
         }, 50);
     });
 
-    document.querySelectorAll('.delete-equip').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+    document.querySelectorAll('.delete-equip').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
             e.stopPropagation();
             const deviceId = btn.getAttribute('data-device-id');
             if (confirm("Удалить оборудование из реестра?")) {
@@ -823,7 +760,7 @@ async function renderEquipmentGrid() {
                 try {
                     await deleteEquipmentFromDB(deviceId);
                     await renderEquipmentGrid();
-                    alert('✅ Оборудование удалено');
+                    alert('Оборудование удалено');
                 } catch (error) {
                     alert(error.message);
                     btn.disabled = false;
@@ -865,10 +802,10 @@ async function addMedicalEquipment(event) {
         document.getElementById('createEquipmentForm').reset();
         switchToTab('view');
         await renderEquipmentGrid();
-        alert(`✅ Оборудование "${nameValue}" успешно добавлено. QR-код сгенерирован!`);
+        alert('Оборудование "' + nameValue + '" успешно добавлено');
     } catch (error) {
         alert(error.message);
-        if (!isOnline) {
+        if (!document.getElementById('syncStatus').innerHTML.includes('✅')) {
             switchToTab('view');
             await renderEquipmentGrid();
         }
@@ -880,7 +817,7 @@ async function addMedicalEquipment(event) {
 
 function switchToTab(tabId) {
     const btns = document.querySelectorAll('.tab-btn');
-    btns.forEach(btn => {
+    btns.forEach(function(btn) {
         const tabName = btn.getAttribute('data-tabname');
         if (tabName === tabId) {
             btn.classList.add('active');
@@ -906,7 +843,7 @@ function checkUrlForCard() {
     const urlParams = new URLSearchParams(window.location.search);
     const cardId = urlParams.get('card');
     if (cardId) {
-        setTimeout(async () => {
+        setTimeout(async function() {
             await fetchAllEquipment();
             openEquipmentCard(cardId);
             const newUrl = window.location.href.split('?')[0];
@@ -919,9 +856,9 @@ let searchTimeout;
 function setupSearchListener() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', () => {
+        searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
+            searchTimeout = setTimeout(function() {
                 renderEquipmentGrid();
             }, 300);
         });
@@ -930,8 +867,8 @@ function setupSearchListener() {
 
 function initApp() {
     const tabButtons = document.querySelectorAll('.tab-btn');
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    tabButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
             const targetTab = btn.getAttribute('data-tabname');
             switchToTab(targetTab);
         });
@@ -942,8 +879,8 @@ function initApp() {
     
     const modal = document.getElementById('equipmentModal');
     const closeBtn = document.querySelector('.close-modal');
-    closeBtn.onclick = () => modal.style.display = 'none';
-    window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
+    closeBtn.onclick = function() { modal.style.display = 'none'; };
+    window.onclick = function(e) { if (e.target == modal) modal.style.display = 'none'; };
 
     setupSearchListener();
     renderEquipmentGrid();

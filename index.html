@@ -6,391 +6,63 @@
     <title>MedEquip QR | Паспорт медицинского оборудования</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-        }
-
-        body {
-            background: #e9f0f3;
-            min-height: 100vh;
-            padding: 28px 20px;
-        }
-
-        .med-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 2rem;
-            box-shadow: 0 20px 35px -12px rgba(1, 55, 74, 0.2);
-            overflow: hidden;
-            border: 1px solid rgba(80, 150, 170, 0.2);
-        }
-
-        .med-header {
-            background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%);
-            padding: 28px 34px;
-            color: white;
-        }
-        .med-header h1 {
-            font-weight: 700;
-            font-size: 1.9rem;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .med-header h1::before {
-            content: "🏥";
-            font-size: 2rem;
-        }
-        .med-sub {
-            color: #d4f0f7;
-            margin-top: 8px;
-            font-size: 0.95rem;
-        }
-        .sync-status {
-            margin-top: 10px;
-            font-size: 0.8rem;
-            color: #b8e1ec;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .sync-status.online {
-            color: #a5f0c2;
-        }
-        .sync-status.offline {
-            color: #ffb8b8;
-        }
-
-        .med-tabs {
-            display: flex;
-            background: #f5fafc;
-            padding: 0 30px;
-            gap: 8px;
-            border-bottom: 1px solid #cde2ea;
-            flex-wrap: wrap;
-        }
-        .tab-btn {
-            background: transparent;
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            padding: 16px 24px;
-            cursor: pointer;
-            color: #226b7c;
-            transition: all 0.2s ease;
-            border-radius: 28px 28px 0 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .tab-btn.active {
-            background: white;
-            color: #0c6d80;
-            border-bottom: 3px solid #0c6d80;
-        }
-        .tab-btn:hover:not(.active) {
-            background: #e1f0f5;
-            color: #0a5c6b;
-        }
-
-        .tab-pane {
-            display: none;
-            padding: 32px 34px;
-            animation: fadeIn 0.25s ease;
-        }
-        .tab-pane.active-pane {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-
-        .search-bar {
-            margin-bottom: 28px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .search-input {
-            flex: 1;
-            padding: 14px 20px;
-            border-radius: 50px;
-            border: 1.5px solid #d4e3ea;
-            font-size: 1rem;
-            background: white;
-            transition: 0.2s;
-        }
-        .search-input:focus {
-            outline: none;
-            border-color: #2b9eb8;
-            box-shadow: 0 0 0 3px rgba(43, 158, 184, 0.15);
-        }
-        .search-info {
-            background: #e8f4f7;
-            border-radius: 16px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #0f6b7c;
-        }
-        .results-count {
-            background: #ecf8fb;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            color: #0f5366;
-        }
-
-        .equip-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 28px;
-        }
-        .equip-card {
-            background: #ffffff;
-            border-radius: 28px;
-            box-shadow: 0 10px 20px rgba(0, 40, 50, 0.05);
-            border: 1px solid #e2f0f5;
-            transition: all 0.25s;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .equip-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 22px 32px -12px rgba(8, 78, 92, 0.2);
-        }
-        .card-header-med {
-            background: #ecf8fb;
-            padding: 18px 20px;
-            border-bottom: 1px solid #d5eaf0;
-        }
-        .card-header-med h3 {
-            font-size: 1.35rem;
-            color: #0f5366;
-            font-weight: 700;
-        }
-        .badge-department {
-            background: #bef0fb;
-            color: #0c6a7c;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 8px;
-        }
-        .card-body-med {
-            padding: 18px 20px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px dashed #e5f0f4;
-            padding: 6px 0;
-            font-size: 0.9rem;
-        }
-        .info-label {
-            font-weight: 700;
-            color: #2b7c90;
-        }
-        .qr-box {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #fefefe;
-            margin: 12px 0 8px;
-            padding: 12px;
-            border-radius: 24px;
-            border: 1px solid #ddecF2;
-            min-height: 150px;
-        }
-        .qr-box canvas, .qr-box img {
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .delete-equip {
-            background: #fee9e9;
-            border: none;
-            color: #bc5a5a;
-            padding: 8px 12px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-            margin-top: 12px;
-        }
-        .delete-equip:hover {
-            background: #fad1d1;
-            color: #a33b3b;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-        .modal-content {
-            background-color: #fff;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 32px;
-            width: 90%;
-            max-width: 550px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-        .modal-header {
-            background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%);
-            color: white;
-            padding: 20px 24px;
-            border-radius: 32px 32px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h2 {
-            font-size: 1.4rem;
-        }
-        .close-modal {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-        .close-modal:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        .modal-body {
-            padding: 24px;
-        }
-        .modal-detail-row {
-            padding: 12px 0;
-            border-bottom: 1px solid #e0eef3;
-        }
-        .modal-detail-label {
-            font-weight: 700;
-            color: #1c6a7c;
-            display: block;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-        .modal-detail-value {
-            color: #2c3e50;
-            font-size: 1rem;
-            line-height: 1.4;
-            word-break: break-word;
-        }
-        .qr-code-in-modal {
-            text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f5fafc;
-            border-radius: 20px;
-        }
-        .form-card-modern {
-            background: #fefeff;
-            border-radius: 32px;
-            box-shadow: 0 8px 18px rgba(0, 32, 46, 0.05);
-            border: 1px solid #cde2ea;
-            padding: 28px 32px;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        .form-group {
-            margin-bottom: 22px;
-        }
-        label {
-            font-weight: 600;
-            color: #1c6a7c;
-            margin-bottom: 8px;
-            display: block;
-            font-size: 0.9rem;
-        }
-        .label-required::after {
-            content: " *";
-            color: #e74c3c;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 20px;
-            border: 1.5px solid #d4e3ea;
-            background: white;
-            font-size: 0.95rem;
-            transition: 0.2s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2b9eb8;
-            box-shadow: 0 0 0 3px rgba(43, 158, 184, 0.15);
-        }
-        .btn-primary {
-            background: #1a7e91;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 14px 20px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 10px;
-        }
-        .btn-primary:hover {
-            background: #0f6474;
-            transform: scale(0.98);
-        }
-        .empty-state {
-            text-align: center;
-            background: #f4fbfe;
-            padding: 45px 20px;
-            border-radius: 36px;
-            color: #568b9b;
-            font-weight: 500;
-        }
-        footer {
-            text-align: center;
-            padding: 18px;
-            font-size: 0.75rem;
-            color: #7f9ea8;
-            background: #fbfefe;
-            border-top: 1px solid #deeef3;
-        }
-        @media (max-width: 680px) {
-            .med-tabs { padding: 0 12px; }
-            .tab-pane { padding: 20px; }
-            .equip-grid { gap: 18px; }
-            .modal-content { margin: 10% auto; width: 95%; }
-        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: #e9f0f3; min-height: 100vh; padding: 28px 20px; }
+        .med-container { max-width: 1400px; margin: 0 auto; background: #ffffff; border-radius: 2rem; box-shadow: 0 20px 35px -12px rgba(1,55,74,0.2); overflow: hidden; border: 1px solid rgba(80,150,170,0.2); }
+        .med-header { background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%); padding: 28px 34px; color: white; }
+        .med-header h1 { font-weight: 700; font-size: 1.9rem; display: flex; align-items: center; gap: 14px; }
+        .med-header h1::before { content: "🏥"; font-size: 2rem; }
+        .med-sub { color: #d4f0f7; margin-top: 8px; font-size: 0.95rem; }
+        .sync-status { margin-top: 10px; font-size: 0.8rem; color: #b8e1ec; display: flex; align-items: center; gap: 8px; }
+        .sync-status.online { color: #a5f0c2; }
+        .sync-status.offline { color: #ffb8b8; }
+        .med-tabs { display: flex; background: #f5fafc; padding: 0 30px; gap: 8px; border-bottom: 1px solid #cde2ea; flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: none; font-weight: 600; font-size: 1rem; padding: 16px 24px; cursor: pointer; color: #226b7c; transition: all 0.2s ease; border-radius: 28px 28px 0 0; display: flex; align-items: center; gap: 8px; }
+        .tab-btn.active { background: white; color: #0c6d80; border-bottom: 3px solid #0c6d80; }
+        .tab-btn:hover:not(.active) { background: #e1f0f5; color: #0a5c6b; }
+        .tab-pane { display: none; padding: 32px 34px; animation: fadeIn 0.25s ease; }
+        .tab-pane.active-pane { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px);} to { opacity: 1; transform: translateY(0);} }
+        .search-bar { margin-bottom: 28px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .search-input { flex: 1; padding: 14px 20px; border-radius: 50px; border: 1.5px solid #d4e3ea; font-size: 1rem; background: white; }
+        .search-input:focus { outline: none; border-color: #2b9eb8; box-shadow: 0 0 0 3px rgba(43,158,184,0.15); }
+        .search-info { background: #e8f4f7; border-radius: 16px; padding: 12px 16px; margin-bottom: 20px; text-align: center; font-size: 0.9rem; color: #0f6b7c; }
+        .results-count { background: #ecf8fb; padding: 8px 16px; border-radius: 40px; font-size: 0.85rem; color: #0f5366; }
+        .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 28px; }
+        .equip-card { background: #ffffff; border-radius: 28px; box-shadow: 0 10px 20px rgba(0,40,50,0.05); border: 1px solid #e2f0f5; transition: all 0.25s; overflow: hidden; cursor: pointer; }
+        .equip-card:hover { transform: translateY(-5px); box-shadow: 0 22px 32px -12px rgba(8,78,92,0.2); }
+        .card-header-med { background: #ecf8fb; padding: 18px 20px; border-bottom: 1px solid #d5eaf0; }
+        .card-header-med h3 { font-size: 1.35rem; color: #0f5366; font-weight: 700; }
+        .badge-department { background: #bef0fb; color: #0c6a7c; padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-top: 8px; }
+        .card-body-med { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .info-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #e5f0f4; padding: 6px 0; font-size: 0.9rem; }
+        .info-label { font-weight: 700; color: #2b7c90; }
+        .qr-box { display: flex; justify-content: center; align-items: center; background: #fefefe; margin: 12px 0 8px; padding: 12px; border-radius: 24px; border: 1px solid #ddecF2; min-height: 150px; }
+        .qr-box canvas, .qr-box img { border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .delete-equip { background: #fee9e9; border: none; color: #bc5a5a; padding: 8px 12px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; width: 100%; margin-top: 12px; }
+        .delete-equip:hover { background: #fad1d1; color: #a33b3b; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 0; border-radius: 32px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .modal-header { background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%); color: white; padding: 20px 24px; border-radius: 32px 32px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 1.4rem; }
+        .close-modal { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 28px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; }
+        .modal-body { padding: 24px; }
+        .modal-detail-row { padding: 12px 0; border-bottom: 1px solid #e0eef3; }
+        .modal-detail-label { font-weight: 700; color: #1c6a7c; display: block; margin-bottom: 6px; font-size: 0.85rem; text-transform: uppercase; }
+        .modal-detail-value { color: #2c3e50; font-size: 1rem; line-height: 1.4; word-break: break-word; }
+        .qr-code-in-modal { text-align: center; margin: 20px 0; padding: 15px; background: #f5fafc; border-radius: 20px; }
+        .form-card-modern { background: #fefeff; border-radius: 32px; box-shadow: 0 8px 18px rgba(0,32,46,0.05); border: 1px solid #cde2ea; padding: 28px 32px; max-width: 700px; margin: 0 auto; }
+        .form-group { margin-bottom: 22px; }
+        label { font-weight: 600; color: #1c6a7c; margin-bottom: 8px; display: block; font-size: 0.9rem; }
+        .label-required::after { content: " *"; color: #e74c3c; }
+        input, select, textarea { width: 100%; padding: 12px 16px; border-radius: 20px; border: 1.5px solid #d4e3ea; background: white; font-size: 0.95rem; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #2b9eb8; box-shadow: 0 0 0 3px rgba(43,158,184,0.15); }
+        .btn-primary { background: #1a7e91; color: white; border: none; width: 100%; padding: 14px 20px; border-radius: 50px; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-primary:hover { background: #0f6474; transform: scale(0.98); }
+        .empty-state { text-align: center; background: #f4fbfe; padding: 45px 20px; border-radius: 36px; color: #568b9b; font-weight: 500; }
+        footer { text-align: center; padding: 18px; font-size: 0.75rem; color: #7f9ea8; background: #fbfefe; border-top: 1px solid #deeef3; }
+        @media (max-width: 680px) { .med-tabs { padding: 0 12px; } .tab-pane { padding: 20px; } .equip-grid { gap: 18px; } .modal-content { margin: 10% auto; width: 95%; } }
     </style>
 </head>
 <body>
@@ -400,7 +72,7 @@
         <h1>MedEquip QR-паспорт</h1>
         <div class="med-sub">Генерация QR-кодов · учёт медицинской техники · сканируйте для просмотра карточки</div>
         <div class="sync-status" id="syncStatus">
-            🔄 Проверка подключения...
+            🔄 Подключение к базе данных...
         </div>
     </div>
 
@@ -430,48 +102,40 @@
                     <label class="label-required">📋 Наименование</label>
                     <input type="text" id="eqName" placeholder="Введите наименование оборудования" required>
                 </div>
-
                 <div class="form-group">
                     <label>👤 Отделение / Ответственный</label>
                     <input type="text" id="eqDepartment" placeholder="Например: Кардиология, ответственный Иванов И.И.">
                 </div>
-
                 <div class="form-group">
                     <label>🔢 Серийный номер</label>
                     <input type="text" id="eqSerial" placeholder="Введите серийный номер">
                 </div>
-
                 <div class="form-group">
                     <label>📅 Дата установки</label>
                     <input type="date" id="eqInstallDate">
                 </div>
-
                 <div class="form-group">
                     <label>📅 Дата последнего техосмотра</label>
                     <input type="date" id="eqLastInspection">
                 </div>
-
                 <div class="form-group">
                     <label>📅 Дата следующего техосмотра</label>
                     <input type="date" id="eqNextInspection">
                 </div>
-
                 <div class="form-group">
                     <label>📖 Руководство к использованию</label>
                     <textarea id="eqManual" rows="3" placeholder="Ссылка на PDF, номер документа или краткая инструкция..."></textarea>
                 </div>
-
                 <div class="form-group">
                     <label>📝 Заметки</label>
                     <textarea id="eqNotes" rows="3" placeholder="Дополнительные заметки, особенности эксплуатации, история ремонтов..."></textarea>
                 </div>
-
                 <button type="submit" class="btn-primary" id="submitBtn">✨ Сгенерировать QR-код и сохранить</button>
             </form>
             <p style="margin-top: 18px; font-size: 12px; color: #739eac;">✓ QR-код содержит ссылку на полную карточку оборудования</p>
         </div>
     </div>
-    <footer>© Медицинский трекер — данные синхронизируются между всеми устройствами</footer>
+    <footer>© Медицинский трекер — данные хранятся в облачной базе данных Supabase</footer>
 </div>
 
 <div id="equipmentModal" class="modal">
@@ -486,67 +150,74 @@
 
 <script>
 // ============================================
-// КОНФИГУРАЦИЯ - ВАЖНО: ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШУ!
+// ПОДКЛЮЧЕНИЕ К SUPABASE
 // ============================================
-// Получите URL вашего API на Render и вставьте его сюда:
-// Например: const API_URL = 'https://medequip-api.onrender.com/api/equipment';
-const API_URL = 'https://medequipapp.onrender.com/api/equipment';
+
+const SUPABASE_URL = 'https://sb_publishable_OkmDVKzDeRiIoPZQz71Y1A_13Sd0XpL.supabase.co';      
+const SUPABASE_KEY = 'sb_secret_2gb6fB3RlQVt1u1UrSuU9A_iZPJw5Yn';                       
 
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
-
 let currentDevices = [];
-let isLoading = false;
 
-// ===== Функции работы с API =====
-async function fetchAllEquipment() {
-    if (isLoading) return currentDevices;
-    isLoading = true;
+// Функция запроса к Supabase
+async function supabaseQuery(method, path, body = null) {
+    const url = `${SUPABASE_URL}/rest/v1/${path}`;
+    const options = {
+        method: method,
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    
+    if (body && (method === 'POST' || method === 'PATCH')) {
+        options.body = JSON.stringify(body);
+    }
     
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        
-        const response = await fetch(API_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) throw new Error('Network error');
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        if (method === 'DELETE') return true;
         const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Supabase error:', error);
+        throw error;
+    }
+}
+
+async function fetchAllEquipment() {
+    try {
+        const data = await supabaseQuery('GET', 'equipment?select=*&order=createdAt.desc');
         currentDevices = data;
         updateSyncStatus(true);
         localStorage.setItem('med_equipment_backup', JSON.stringify(data));
         return data;
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Fetch error:', error);
         updateSyncStatus(false);
-        
         const backupData = localStorage.getItem('med_equipment_backup');
         if (backupData) {
             currentDevices = JSON.parse(backupData);
             return currentDevices;
         }
         return [];
-    } finally {
-        isLoading = false;
     }
 }
 
 async function addEquipmentToDB(device) {
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(device)
-        });
-        if (!response.ok) throw new Error('Add failed');
-        const savedDevice = await response.json();
-        currentDevices = [savedDevice, ...currentDevices];
+        const result = await supabaseQuery('POST', 'equipment', device);
+        currentDevices = [device, ...currentDevices];
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
         updateSyncStatus(true);
-        return savedDevice;
+        return device;
     } catch (error) {
         console.error('Add error:', error);
         updateSyncStatus(false);
-        device.id = device.id || generateId();
         device.offlineMode = true;
         currentDevices = [device, ...currentDevices];
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
@@ -556,9 +227,7 @@ async function addEquipmentToDB(device) {
 
 async function deleteEquipmentFromDB(id) {
     try {
-        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (!response.ok && response.status !== 404) throw new Error('Delete failed');
-        
+        await supabaseQuery('DELETE', `equipment?id=eq.${id}`);
         currentDevices = currentDevices.filter(d => d.id != id);
         localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
         updateSyncStatus(true);
@@ -575,7 +244,7 @@ async function deleteEquipmentFromDB(id) {
 function updateSyncStatus(online) {
     const statusDiv = document.getElementById('syncStatus');
     if (online) {
-        statusDiv.innerHTML = '✅ База данных подключена · данные синхронизируются';
+        statusDiv.innerHTML = '✅ База данных Supabase подключена · данные синхронизируются';
         statusDiv.className = 'sync-status online';
     } else {
         statusDiv.innerHTML = '⚠️ Оффлайн-режим · работа с локальной копией';

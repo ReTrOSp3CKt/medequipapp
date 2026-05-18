@@ -188,6 +188,7 @@ async function fetchAllEquipment() {
 async function addEquipmentToDB(device) {
     try {
         const url = `${SUPABASE_URL}/rest/v1/equipment`;
+        console.log('Отправляем:', device); // Для отладки
         await supabaseFetch(url, {
             method: 'POST',
             body: JSON.stringify(device)
@@ -384,18 +385,18 @@ async function addMedicalEquipment(event) {
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Сохранение...';
     
-    const newDevice = {
-        id: generateId(),
-        name: nameValue,
-        department: document.getElementById('eqDepartment').value.trim() || "—",
-        serialNumber: document.getElementById('eqSerial').value.trim() || "—",
-        installDate: document.getElementById('eqInstallDate').value || "—",
-        lastInspection: document.getElementById('eqLastInspection').value || "—",
-        nextInspection: document.getElementById('eqNextInspection').value || "—",
-        manual: document.getElementById('eqManual').value.trim() || "—",
-        notes: document.getElementById('eqNotes').value.trim() || "—",
-        createdAt: new Date().toLocaleString('ru-RU')
-    };
+   const newDevice = {
+    id: generateId(),
+    name: nameValue,
+    department: document.getElementById('eqDepartment').value.trim() || "—",
+    serialnumber: document.getElementById('eqSerial').value.trim() || "—",     // ← маленькими
+    installdate: document.getElementById('eqInstallDate').value || "—",       // ← маленькими
+    lastinspection: document.getElementById('eqLastInspection').value || "—", // ← маленькими
+    nextinspection: document.getElementById('eqNextInspection').value || "—", // ← маленькими
+    manual: document.getElementById('eqManual').value.trim() || "—",
+    notes: document.getElementById('eqNotes').value.trim() || "—",
+    createdAt: new Date().toLocaleString('ru-RU')  // ← с большой C и большой A
+};
     
     try {
         await addEquipmentToDB(newDevice);

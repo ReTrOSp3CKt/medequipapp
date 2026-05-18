@@ -6,27 +6,24 @@
     <title>MedEquip QR | Паспорт медицинского оборудования</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: #e9f0f3; min-height: 100vh; padding: 28px 20px; }
-        .med-container { max-width: 1400px; margin: 0 auto; background: #ffffff; border-radius: 2rem; box-shadow: 0 20px 35px -12px rgba(1,55,74,0.2); overflow: hidden; border: 1px solid rgba(80,150,170,0.2); }
+        .med-container { max-width: 1400px; margin: 0 auto; background: #ffffff; border-radius: 2rem; box-shadow: 0 20px 35px -12px rgba(1,55,74,0.2); overflow: hidden; }
         .med-header { background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%); padding: 28px 34px; color: white; }
         .med-header h1 { font-weight: 700; font-size: 1.9rem; display: flex; align-items: center; gap: 14px; }
         .med-header h1::before { content: "🏥"; font-size: 2rem; }
         .med-sub { color: #d4f0f7; margin-top: 8px; font-size: 0.95rem; }
-        .sync-status { margin-top: 10px; font-size: 0.8rem; color: #b8e1ec; display: flex; align-items: center; gap: 8px; }
+        .sync-status { margin-top: 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px; }
         .sync-status.online { color: #a5f0c2; }
         .sync-status.offline { color: #ffb8b8; }
         .med-tabs { display: flex; background: #f5fafc; padding: 0 30px; gap: 8px; border-bottom: 1px solid #cde2ea; flex-wrap: wrap; }
-        .tab-btn { background: transparent; border: none; font-weight: 600; font-size: 1rem; padding: 16px 24px; cursor: pointer; color: #226b7c; transition: all 0.2s ease; border-radius: 28px 28px 0 0; display: flex; align-items: center; gap: 8px; }
+        .tab-btn { background: transparent; border: none; font-weight: 600; font-size: 1rem; padding: 16px 24px; cursor: pointer; color: #226b7c; border-radius: 28px 28px 0 0; display: flex; align-items: center; gap: 8px; }
         .tab-btn.active { background: white; color: #0c6d80; border-bottom: 3px solid #0c6d80; }
-        .tab-btn:hover:not(.active) { background: #e1f0f5; color: #0a5c6b; }
         .tab-pane { display: none; padding: 32px 34px; animation: fadeIn 0.25s ease; }
         .tab-pane.active-pane { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px);} to { opacity: 1; transform: translateY(0);} }
-        .search-bar { margin-bottom: 28px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .search-input { flex: 1; padding: 14px 20px; border-radius: 50px; border: 1.5px solid #d4e3ea; font-size: 1rem; background: white; }
-        .search-input:focus { outline: none; border-color: #2b9eb8; box-shadow: 0 0 0 3px rgba(43,158,184,0.15); }
+        .search-bar { margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .search-input { flex: 1; padding: 14px 20px; border-radius: 50px; border: 1.5px solid #d4e3ea; font-size: 1rem; }
         .search-info { background: #e8f4f7; border-radius: 16px; padding: 12px 16px; margin-bottom: 20px; text-align: center; font-size: 0.9rem; color: #0f6b7c; }
         .results-count { background: #ecf8fb; padding: 8px 16px; border-radius: 40px; font-size: 0.85rem; color: #0f5366; }
         .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 28px; }
@@ -39,30 +36,24 @@
         .info-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #e5f0f4; padding: 6px 0; font-size: 0.9rem; }
         .info-label { font-weight: 700; color: #2b7c90; }
         .qr-box { display: flex; justify-content: center; align-items: center; background: #fefefe; margin: 12px 0 8px; padding: 12px; border-radius: 24px; border: 1px solid #ddecF2; min-height: 150px; }
-        .qr-box canvas, .qr-box img { border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .delete-equip { background: #fee9e9; border: none; color: #bc5a5a; padding: 8px 12px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; width: 100%; margin-top: 12px; }
-        .delete-equip:hover { background: #fad1d1; color: #a33b3b; }
+        .delete-equip { background: #fee9e9; border: none; color: #bc5a5a; padding: 8px 12px; border-radius: 40px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 12px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
-        .modal-content { background-color: #fff; margin: 5% auto; padding: 0; border-radius: 32px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 0; border-radius: 32px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; }
         .modal-header { background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%); color: white; padding: 20px 24px; border-radius: 32px 32px 0 0; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h2 { font-size: 1.4rem; }
         .close-modal { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 28px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; }
         .modal-body { padding: 24px; }
         .modal-detail-row { padding: 12px 0; border-bottom: 1px solid #e0eef3; }
         .modal-detail-label { font-weight: 700; color: #1c6a7c; display: block; margin-bottom: 6px; font-size: 0.85rem; text-transform: uppercase; }
-        .modal-detail-value { color: #2c3e50; font-size: 1rem; line-height: 1.4; word-break: break-word; }
+        .modal-detail-value { color: #2c3e50; font-size: 1rem; line-height: 1.4; }
         .qr-code-in-modal { text-align: center; margin: 20px 0; padding: 15px; background: #f5fafc; border-radius: 20px; }
-        .form-card-modern { background: #fefeff; border-radius: 32px; box-shadow: 0 8px 18px rgba(0,32,46,0.05); border: 1px solid #cde2ea; padding: 28px 32px; max-width: 700px; margin: 0 auto; }
+        .form-card-modern { background: #fefeff; border-radius: 32px; border: 1px solid #cde2ea; padding: 28px 32px; max-width: 700px; margin: 0 auto; }
         .form-group { margin-bottom: 22px; }
         label { font-weight: 600; color: #1c6a7c; margin-bottom: 8px; display: block; font-size: 0.9rem; }
-        .label-required::after { content: " *"; color: #e74c3c; }
-        input, select, textarea { width: 100%; padding: 12px 16px; border-radius: 20px; border: 1.5px solid #d4e3ea; background: white; font-size: 0.95rem; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #2b9eb8; box-shadow: 0 0 0 3px rgba(43,158,184,0.15); }
-        .btn-primary { background: #1a7e91; color: white; border: none; width: 100%; padding: 14px 20px; border-radius: 50px; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-primary:hover { background: #0f6474; transform: scale(0.98); }
-        .empty-state { text-align: center; background: #f4fbfe; padding: 45px 20px; border-radius: 36px; color: #568b9b; font-weight: 500; }
+        input, textarea { width: 100%; padding: 12px 16px; border-radius: 20px; border: 1.5px solid #d4e3ea; background: white; font-size: 0.95rem; }
+        .btn-primary { background: #1a7e91; color: white; border: none; width: 100%; padding: 14px 20px; border-radius: 50px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        .empty-state { text-align: center; background: #f4fbfe; padding: 45px 20px; border-radius: 36px; color: #568b9b; }
         footer { text-align: center; padding: 18px; font-size: 0.75rem; color: #7f9ea8; background: #fbfefe; border-top: 1px solid #deeef3; }
-        @media (max-width: 680px) { .med-tabs { padding: 0 12px; } .tab-pane { padding: 20px; } .equip-grid { gap: 18px; } .modal-content { margin: 10% auto; width: 95%; } }
+        @media (max-width: 680px) { .med-tabs { padding: 0 12px; } .tab-pane { padding: 20px; } .equip-grid { gap: 18px; } }
     </style>
 </head>
 <body>
@@ -70,72 +61,65 @@
 <div class="med-container">
     <div class="med-header">
         <h1>MedEquip QR-паспорт</h1>
-        <div class="med-sub">Генерация QR-кодов · учёт медицинской техники · сканируйте для просмотра карточки</div>
-        <div class="sync-status" id="syncStatus">
-            🔄 Подключение к базе данных...
-        </div>
+        <div class="med-sub">Генерация QR-кодов · учёт медицинской техники</div>
+        <div class="sync-status" id="syncStatus">🔄 Подключение...</div>
     </div>
 
     <div class="med-tabs">
-        <button class="tab-btn active" data-tabname="view">📋 Оборудование и QR</button>
-        <button class="tab-btn" data-tabname="add">✚ Опросник · Добавить</button>
+        <button class="tab-btn active" data-tabname="view">📋 Оборудование</button>
+        <button class="tab-btn" data-tabname="add">✚ Добавить</button>
     </div>
 
     <div id="viewTab" class="tab-pane active-pane">
-        <div class="search-info">
-            📱 <strong>Как это работает:</strong> Отсканируйте QR-код камерой телефона — откроется полная карточка оборудования
-        </div>
-        
+        <div class="search-info">📱 Отсканируйте QR-код — откроется карточка оборудования</div>
         <div class="search-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск по наименованию, отделению, серийному номеру...">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск...">
             <div id="resultsCount" class="results-count">Всего: 0</div>
         </div>
-        
         <div id="equipmentListGrid" class="equip-grid"></div>
     </div>
 
     <div id="addTab" class="tab-pane">
         <div class="form-card-modern">
-            <h3 style="color:#165e6e; margin-bottom: 1.5rem;">📝 Регистрация медицинского оборудования</h3>
+            <h3 style="color:#165e6e;">📝 Регистрация оборудования</h3>
             <form id="createEquipmentForm">
                 <div class="form-group">
-                    <label class="label-required">📋 Наименование</label>
-                    <input type="text" id="eqName" placeholder="Введите наименование оборудования" required>
+                    <label>📋 Наименование *</label>
+                    <input type="text" id="eqName" required>
                 </div>
                 <div class="form-group">
-                    <label>👤 Отделение / Ответственный</label>
-                    <input type="text" id="eqDepartment" placeholder="Например: Кардиология, ответственный Иванов И.И.">
+                    <label>👤 Отделение</label>
+                    <input type="text" id="eqDepartment">
                 </div>
                 <div class="form-group">
                     <label>🔢 Серийный номер</label>
-                    <input type="text" id="eqSerial" placeholder="Введите серийный номер">
+                    <input type="text" id="eqSerial">
                 </div>
                 <div class="form-group">
                     <label>📅 Дата установки</label>
                     <input type="date" id="eqInstallDate">
                 </div>
                 <div class="form-group">
-                    <label>📅 Дата последнего техосмотра</label>
+                    <label>📅 Последний техосмотр</label>
                     <input type="date" id="eqLastInspection">
                 </div>
                 <div class="form-group">
-                    <label>📅 Дата следующего техосмотра</label>
+                    <label>📅 Следующий техосмотр</label>
                     <input type="date" id="eqNextInspection">
                 </div>
                 <div class="form-group">
-                    <label>📖 Руководство к использованию</label>
-                    <textarea id="eqManual" rows="3" placeholder="Ссылка на PDF, номер документа или краткая инструкция..."></textarea>
+                    <label>📖 Руководство</label>
+                    <textarea id="eqManual" rows="3"></textarea>
                 </div>
                 <div class="form-group">
                     <label>📝 Заметки</label>
-                    <textarea id="eqNotes" rows="3" placeholder="Дополнительные заметки, особенности эксплуатации, история ремонтов..."></textarea>
+                    <textarea id="eqNotes" rows="3"></textarea>
                 </div>
-                <button type="submit" class="btn-primary" id="submitBtn">✨ Сгенерировать QR-код и сохранить</button>
+                <button type="submit" class="btn-primary" id="submitBtn">✨ Сохранить и создать QR</button>
             </form>
-            <p style="margin-top: 18px; font-size: 12px; color: #739eac;">✓ QR-код содержит ссылку на полную карточку оборудования</p>
         </div>
     </div>
-    <footer>© Медицинский трекер — данные хранятся в облачной базе данных Supabase</footer>
+    <footer>MedEquip QR — облачная синхронизация</footer>
 </div>
 
 <div id="equipmentModal" class="modal">
@@ -150,80 +134,66 @@
 
 <script>
 // ============================================
-// ПОДКЛЮЧЕНИЕ К SUPABASE
+// ПОДКЛЮЧЕНИЕ К SUPABASE (ИСПРАВЛЕНО)
 // ============================================
-
-const SUPABASE_URL = 'https://rbdenrzeikucusoeyjga.supabase.co';      
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZGVucnplaWt1Y3Vzb2V5amdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzYzNjUsImV4cCI6MjA5NDI1MjM2NX0.ISgVQGMZYGIVkygS4ABFL_VQ0KiIZwXfOed6hg5yPho';                       
+const SUPABASE_URL = 'https://rbdenrzeikucusoeyjga.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZGVucnplaWt1Y3Vzb2V5amdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzYzNjUsImV4cCI6MjA5NDI1MjM2NX0.ISgVQGMZYGIVkygS4ABFL_VQ0KiIZwXfOed6hg5yPho';
 
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 let currentDevices = [];
 
 // Функция запроса к Supabase
-async function supabaseQuery(method, path, body = null) {
-    // Формируем правильный URL
-    const url = `${SUPABASE_URL}/rest/v1/${path}`;
-    
-    console.log('Запрос к:', url);
-    console.log('Метод:', method);
-    
-    const options = {
-        method: method,
+async function supabaseFetch(url, options = {}) {
+    const response = await fetch(url, {
+        ...options,
         headers: {
             'apikey': SUPABASE_KEY,
             'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...options.headers
         }
-    };
+    });
     
-    if (body && (method === 'POST' || method === 'PATCH')) {
-        options.body = JSON.stringify(body);
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`HTTP ${response.status}: ${error}`);
     }
     
-    try {
-        const response = await fetch(url, options);
-        console.log('Статус ответа:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Текст ошибки:', errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
-        }
-        
-        if (method === 'DELETE') return true;
-        const data = await response.json();
-        console.log('Получено записей:', Array.isArray(data) ? data.length : 1);
-        return data;
-    } catch (error) {
-        console.error('Supabase error:', error);
-        throw error;
-    }
+    if (response.status === 204) return null;
+    return await response.json();
 }
 
+// Загрузка всех записей
 async function fetchAllEquipment() {
     try {
-        const data = await supabaseQuery('GET', 'equipment?select=*&order=createdAt.desc');
-        currentDevices = data;
+        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdAt.desc`;
+        const data = await supabaseFetch(url);
+        currentDevices = data || [];
         updateSyncStatus(true);
-        localStorage.setItem('med_equipment_backup', JSON.stringify(data));
-        return data;
+        localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
+        return currentDevices;
     } catch (error) {
         console.error('Fetch error:', error);
         updateSyncStatus(false);
-        const backupData = localStorage.getItem('med_equipment_backup');
-        if (backupData) {
-            currentDevices = JSON.parse(backupData);
+        const backup = localStorage.getItem('medequip_backup');
+        if (backup) {
+            currentDevices = JSON.parse(backup);
             return currentDevices;
         }
         return [];
     }
 }
 
+// Добавление записи
 async function addEquipmentToDB(device) {
     try {
-        const result = await supabaseQuery('POST', 'equipment', device);
+        const url = `${SUPABASE_URL}/rest/v1/equipment`;
+        await supabaseFetch(url, {
+            method: 'POST',
+            body: JSON.stringify(device)
+        });
         currentDevices = [device, ...currentDevices];
-        localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
+        localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
         updateSyncStatus(true);
         return device;
     } catch (error) {
@@ -231,34 +201,36 @@ async function addEquipmentToDB(device) {
         updateSyncStatus(false);
         device.offlineMode = true;
         currentDevices = [device, ...currentDevices];
-        localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
-        throw new Error('Оффлайн-режим: данные сохранены локально');
+        localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
+        throw new Error('Сохранено локально (нет связи с сервером)');
     }
 }
 
+// Удаление записи
 async function deleteEquipmentFromDB(id) {
     try {
-        await supabaseQuery('DELETE', `equipment?id=eq.${id}`);
+        const url = `${SUPABASE_URL}/rest/v1/equipment?id=eq.${id}`;
+        await supabaseFetch(url, { method: 'DELETE' });
         currentDevices = currentDevices.filter(d => d.id != id);
-        localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
+        localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
         updateSyncStatus(true);
         return true;
     } catch (error) {
         console.error('Delete error:', error);
         updateSyncStatus(false);
         currentDevices = currentDevices.filter(d => d.id != id);
-        localStorage.setItem('med_equipment_backup', JSON.stringify(currentDevices));
-        throw new Error('Оффлайн-режим: удаление будет выполнено позже');
+        localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
+        throw new Error('Удалено локально (будет синхронизировано позже)');
     }
 }
 
 function updateSyncStatus(online) {
     const statusDiv = document.getElementById('syncStatus');
     if (online) {
-        statusDiv.innerHTML = '✅ База данных Supabase подключена · данные синхронизируются';
+        statusDiv.innerHTML = '✅ База данных подключена · синхронизация работает';
         statusDiv.className = 'sync-status online';
     } else {
-        statusDiv.innerHTML = '⚠️ Оффлайн-режим · работа с локальной копией';
+        statusDiv.innerHTML = '⚠️ Оффлайн-режим · данные локально';
         statusDiv.className = 'sync-status offline';
     }
 }
@@ -282,18 +254,14 @@ function generateQRCode(containerId, equipmentId) {
     if (!container) return;
     container.innerHTML = '';
     const cardUrl = BASE_URL + '?card=' + encodeURIComponent(equipmentId);
-    try {
-        new QRCode(container, {
-            text: cardUrl,
-            width: 130,
-            height: 130,
-            colorDark: "#135f70",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M
-        });
-    } catch (error) {
-        container.innerHTML = '<div style="text-align:center; color:red; font-size:12px;">Ошибка генерации QR</div>';
-    }
+    new QRCode(container, {
+        text: cardUrl,
+        width: 130,
+        height: 130,
+        colorDark: "#135f70",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+    });
 }
 
 function openEquipmentCard(equipmentId) {
@@ -307,42 +275,15 @@ function openEquipmentCard(equipmentId) {
     const modalBody = document.getElementById('modalBody');
     
     modalBody.innerHTML = `
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">📋 Наименование</div>
-            <div class="modal-detail-value"><strong>${escapeHtml(device.name)}</strong></div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">👤 Отделение</div>
-            <div class="modal-detail-value">${escapeHtml(device.department || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">🔢 Серийный номер</div>
-            <div class="modal-detail-value">${escapeHtml(device.serialNumber || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">📅 Дата установки</div>
-            <div class="modal-detail-value">${escapeHtml(device.installDate || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">📅 Последний техосмотр</div>
-            <div class="modal-detail-value">${escapeHtml(device.lastInspection || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">📅 Следующий техосмотр</div>
-            <div class="modal-detail-value">${escapeHtml(device.nextInspection || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">📖 Руководство</div>
-            <div class="modal-detail-value">${escapeHtml(device.manual || '—')}</div>
-        </div>
-        <div class="modal-detail-row">
-            <div class="modal-detail-label">📝 Заметки</div>
-            <div class="modal-detail-value">${escapeHtml(device.notes || '—')}</div>
-        </div>
-        <div class="qr-code-in-modal">
-            <div style="font-size: 12px; color: #1c6a7c; margin-bottom: 8px;">QR-код для этой позиции:</div>
-            <div id="modalQRContainer"></div>
-        </div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📋 Наименование</div><div class="modal-detail-value"><strong>${escapeHtml(device.name)}</strong></div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">👤 Отделение</div><div class="modal-detail-value">${escapeHtml(device.department || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">🔢 Серийный номер</div><div class="modal-detail-value">${escapeHtml(device.serialNumber || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📅 Дата установки</div><div class="modal-detail-value">${escapeHtml(device.installDate || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📅 Последний техосмотр</div><div class="modal-detail-value">${escapeHtml(device.lastInspection || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📅 Следующий техосмотр</div><div class="modal-detail-value">${escapeHtml(device.nextInspection || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📖 Руководство</div><div class="modal-detail-value">${escapeHtml(device.manual || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📝 Заметки</div><div class="modal-detail-value">${escapeHtml(device.notes || '—')}</div></div>
+        <div class="qr-code-in-modal"><div id="modalQRContainer"></div></div>
     `;
     
     modal.style.display = 'block';
@@ -362,216 +303,166 @@ function openEquipmentCard(equipmentId) {
     }, 100);
 }
 
-function filterDevices(devices, searchTerm) {
-    if (!searchTerm.trim()) return devices;
-    const term = searchTerm.toLowerCase().trim();
-    return devices.filter(device => {
-        return (device.name && device.name.toLowerCase().includes(term)) ||
-               (device.department && device.department.toLowerCase().includes(term)) ||
-               (device.serialNumber && device.serialNumber.toLowerCase().includes(term));
-    });
-}
-
 async function renderEquipmentGrid() {
     const container = document.getElementById("equipmentListGrid");
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput ? searchInput.value : '';
     
-    container.innerHTML = '<div class="empty-state">🔄 Загрузка данных...</div>';
+    container.innerHTML = '<div class="empty-state">🔄 Загрузка...</div>';
     
     const devices = await fetchAllEquipment();
-    const filteredDevices = filterDevices(devices, searchTerm);
-    const resultsCountSpan = document.getElementById('resultsCount');
-    if (resultsCountSpan) {
-        resultsCountSpan.textContent = 'Найдено: ' + filteredDevices.length + ' из ' + devices.length;
-    }
-
+    const filteredDevices = devices.filter(d => {
+        if (!searchTerm.trim()) return true;
+        const term = searchTerm.toLowerCase();
+        return (d.name && d.name.toLowerCase().includes(term)) ||
+               (d.department && d.department.toLowerCase().includes(term)) ||
+               (d.serialNumber && d.serialNumber.toLowerCase().includes(term));
+    });
+    
+    const countSpan = document.getElementById('resultsCount');
+    if (countSpan) countSpan.textContent = `Найдено: ${filteredDevices.length} из ${devices.length}`;
+    
     if (!filteredDevices.length) {
-        if (devices.length === 0) {
-            container.innerHTML = '<div class="empty-state">🏥 Медицинское оборудование не найдено.<br>📌 Перейдите на вкладку "Опросник" и добавьте первую единицу техники.</div>';
-        } else {
-            container.innerHTML = '<div class="empty-state">🔍 Ничего не найдено.<br>Попробуйте изменить поисковый запрос.</div>';
-        }
+        container.innerHTML = '<div class="empty-state">🏥 Оборудование не найдено.<br>📌 Добавьте первую единицу техники.</div>';
         return;
     }
-
+    
     container.innerHTML = '';
     
     filteredDevices.forEach((device, idx) => {
         const qrId = 'qr_' + device.id + '_' + idx;
-        const cardDiv = document.createElement('div');
-        cardDiv.className = 'equip-card';
-        
-        cardDiv.addEventListener('click', function(e) {
-            if (e.target.classList.contains('delete-equip')) return;
-            openEquipmentCard(device.id);
-        });
-        
-        cardDiv.innerHTML = `
+        const card = document.createElement('div');
+        card.className = 'equip-card';
+        card.onclick = (e) => { if (!e.target.classList.contains('delete-equip')) openEquipmentCard(device.id); };
+        card.innerHTML = `
             <div class="card-header-med">
                 <h3>${escapeHtml(device.name)}</h3>
-                <div>
-                    <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
-                </div>
+                <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
             </div>
             <div class="card-body-med">
                 <div class="info-row"><span class="info-label">Серийный номер:</span> ${escapeHtml(device.serialNumber || '—')}</div>
-                <div class="info-row"><span class="info-label">Дата установки:</span> ${escapeHtml(device.installDate || '—')}</div>
-                <div class="info-row"><span class="info-label">Следующий техосмотр:</span> ${escapeHtml(device.nextInspection || '—')}</div>
+                <div class="info-row"><span class="info-label">Следующий осмотр:</span> ${escapeHtml(device.nextInspection || '—')}</div>
                 <div class="qr-box" id="${qrId}"></div>
-                <button class="delete-equip" data-device-id="${device.id}">🗑 Удалить оборудование</button>
+                <button class="delete-equip" data-id="${device.id}">🗑 Удалить</button>
             </div>
         `;
-
-        container.appendChild(cardDiv);
-        
-        setTimeout(function() {
-            generateQRCode(qrId, device.id);
-        }, 50);
+        container.appendChild(card);
+        setTimeout(() => generateQRCode(qrId, device.id), 50);
     });
-
-    document.querySelectorAll('.delete-equip').forEach(function(btn) {
-        btn.addEventListener('click', async function(e) {
+    
+    document.querySelectorAll('.delete-equip').forEach(btn => {
+        btn.onclick = async (e) => {
             e.stopPropagation();
-            const deviceId = btn.getAttribute('data-device-id');
-            if (confirm("Удалить оборудование из реестра?")) {
+            const id = btn.getAttribute('data-id');
+            if (confirm('Удалить оборудование?')) {
                 btn.disabled = true;
                 btn.textContent = '⌛ Удаление...';
                 try {
-                    await deleteEquipmentFromDB(deviceId);
+                    await deleteEquipmentFromDB(id);
                     await renderEquipmentGrid();
                     alert('Оборудование удалено');
-                } catch (error) {
-                    alert(error.message);
+                } catch (err) {
+                    alert(err.message);
                     btn.disabled = false;
-                    btn.textContent = '🗑 Удалить оборудование';
+                    btn.textContent = '🗑 Удалить';
                 }
             }
-        });
+        };
     });
 }
 
-async function addMedicalEquipment(event) {
-    event.preventDefault();
-
-    const nameValue = document.getElementById('eqName').value.trim();
-    if (!nameValue) {
-        alert("Пожалуйста, заполните наименование оборудования.");
-        return;
-    }
-
+async function addMedicalEquipment(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('eqName').value.trim();
+    if (!name) return alert('Введите наименование');
+    
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Сохранение...';
-
+    
     const newDevice = {
         id: generateId(),
-        name: nameValue,
-        department: document.getElementById('eqDepartment').value.trim() || "—",
-        serialNumber: document.getElementById('eqSerial').value.trim() || "—",
-        installDate: document.getElementById('eqInstallDate').value || "—",
-        lastInspection: document.getElementById('eqLastInspection').value || "—",
-        nextInspection: document.getElementById('eqNextInspection').value || "—",
-        manual: document.getElementById('eqManual').value.trim() || "—",
-        notes: document.getElementById('eqNotes').value.trim() || "—",
-        createdAt: new Date().toLocaleString('ru-RU'),
+        name: name,
+        department: document.getElementById('eqDepartment').value.trim() || '—',
+        serialNumber: document.getElementById('eqSerial').value.trim() || '—',
+        installDate: document.getElementById('eqInstallDate').value || '—',
+        lastInspection: document.getElementById('eqLastInspection').value || '—',
+        nextInspection: document.getElementById('eqNextInspection').value || '—',
+        manual: document.getElementById('eqManual').value.trim() || '—',
+        notes: document.getElementById('eqNotes').value.trim() || '—',
+        createdAt: new Date().toLocaleString('ru-RU')
     };
-
+    
     try {
         await addEquipmentToDB(newDevice);
         document.getElementById('createEquipmentForm').reset();
         switchToTab('view');
         await renderEquipmentGrid();
-        alert('Оборудование "' + nameValue + '" успешно добавлено');
-    } catch (error) {
-        alert(error.message);
-        if (!document.getElementById('syncStatus').innerHTML.includes('✅')) {
-            switchToTab('view');
-            await renderEquipmentGrid();
-        }
+        alert(`✅ Оборудование "${name}" добавлено!`);
+    } catch (err) {
+        alert(err.message);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = '✨ Сгенерировать QR-код и сохранить';
+        submitBtn.textContent = '✨ Сохранить и создать QR';
     }
 }
 
 function switchToTab(tabId) {
-    const btns = document.querySelectorAll('.tab-btn');
-    btns.forEach(function(btn) {
-        const tabName = btn.getAttribute('data-tabname');
-        if (tabName === tabId) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        const name = btn.getAttribute('data-tabname');
+        if (name === tabId) btn.classList.add('active');
+        else btn.classList.remove('active');
     });
-
-    const viewPanel = document.getElementById('viewTab');
-    const addPanel = document.getElementById('addTab');
-
+    
+    const view = document.getElementById('viewTab');
+    const add = document.getElementById('addTab');
+    
     if (tabId === 'view') {
-        viewPanel.classList.add('active-pane');
-        addPanel.classList.remove('active-pane');
+        view.classList.add('active-pane');
+        add.classList.remove('active-pane');
         renderEquipmentGrid();
-    } else if (tabId === 'add') {
-        addPanel.classList.add('active-pane');
-        viewPanel.classList.remove('active-pane');
+    } else {
+        add.classList.add('active-pane');
+        view.classList.remove('active-pane');
     }
 }
 
 function checkUrlForCard() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const cardId = urlParams.get('card');
+    const params = new URLSearchParams(window.location.search);
+    const cardId = params.get('card');
     if (cardId) {
-        setTimeout(async function() {
+        setTimeout(async () => {
             await fetchAllEquipment();
             openEquipmentCard(cardId);
-            const newUrl = window.location.href.split('?')[0];
-            window.history.pushState({}, '', newUrl);
+            history.pushState({}, '', window.location.pathname);
         }, 500);
     }
 }
 
 let searchTimeout;
-function setupSearchListener() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
-                renderEquipmentGrid();
-            }, 300);
-        });
-    }
-}
-
-function initApp() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    tabButtons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const targetTab = btn.getAttribute('data-tabname');
-            switchToTab(targetTab);
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = () => switchToTab(btn.getAttribute('data-tabname'));
     });
-
-    const form = document.getElementById('createEquipmentForm');
-    form.addEventListener('submit', addMedicalEquipment);
+    
+    document.getElementById('createEquipmentForm').onsubmit = addMedicalEquipment;
     
     const modal = document.getElementById('equipmentModal');
-    const closeBtn = document.querySelector('.close-modal');
-    closeBtn.onclick = function() { modal.style.display = 'none'; };
-    window.onclick = function(e) { if (e.target == modal) modal.style.display = 'none'; };
-
-    setupSearchListener();
+    document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
+    window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    
+    const search = document.getElementById('searchInput');
+    if (search) {
+        search.oninput = () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => renderEquipmentGrid(), 300);
+        };
+    }
+    
     renderEquipmentGrid();
     checkUrlForCard();
-}
-
-if (typeof QRCode === 'undefined') {
-    window.addEventListener('load', initApp);
-} else {
-    initApp();
-}
+});
 </script>
 </body>
 </html>

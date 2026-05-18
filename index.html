@@ -382,17 +382,17 @@ async function addMedicalEquipment(e) {
     submitBtn.textContent = '⏳ Сохранение...';
     
     const newDevice = {
-        id: generateId(),
-        name: name,
-        department: document.getElementById('eqDepartment').value.trim() || '—',
-        serialNumber: document.getElementById('eqSerial').value.trim() || '—',
-        installDate: document.getElementById('eqInstallDate').value || '—',
-        lastInspection: document.getElementById('eqLastInspection').value || '—',
-        nextInspection: document.getElementById('eqNextInspection').value || '—',
-        manual: document.getElementById('eqManual').value.trim() || '—',
-        notes: document.getElementById('eqNotes').value.trim() || '—',
-        createdAt: new Date().toLocaleString('ru-RU')
-    };
+    id: generateId(),
+    name: nameValue,
+    department: document.getElementById('eqDepartment').value.trim() || "—",
+    serialNumber: document.getElementById('eqSerial').value.trim() || "—",
+    installDate: document.getElementById('eqInstallDate').value || "—",
+    lastInspection: document.getElementById('eqLastInspection').value || "—",
+    nextInspection: document.getElementById('eqNextInspection').value || "—",
+    manual: document.getElementById('eqManual').value.trim() || "—",
+    notes: document.getElementById('eqNotes').value.trim() || "—",
+    createdAt: new Date().toLocaleString('ru-RU')
+};
     
     try {
         await addEquipmentToDB(newDevice);

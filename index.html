@@ -134,7 +134,7 @@
 
 <script>
 // ============================================
-// ПОДКЛЮЧЕНИЕ К SUPABASE (ИСПРАВЛЕНО)
+// ПОДКЛЮЧЕНИЕ К SUPABASE
 // ============================================
 const SUPABASE_URL = 'https://rbdenrzeikucusoeyjga.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZGVucnplaWt1Y3Vzb2V5amdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzYzNjUsImV4cCI6MjA5NDI1MjM2NX0.ISgVQGMZYGIVkygS4ABFL_VQ0KiIZwXfOed6hg5yPho';
@@ -142,7 +142,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 let currentDevices = [];
 
-// Функция запроса к Supabase
+// Универсальная функция запроса
 async function supabaseFetch(url, options = {}) {
     const response = await fetch(url, {
         ...options,
@@ -156,7 +156,7 @@ async function supabaseFetch(url, options = {}) {
     
     if (!response.ok) {
         const error = await response.text();
-        throw new Error(`HTTP ${response.status}: ${error}`);
+        throw new Error(`HTTP ${response.status}`);
     }
     
     if (response.status === 204) return null;
@@ -166,7 +166,7 @@ async function supabaseFetch(url, options = {}) {
 // Загрузка всех записей
 async function fetchAllEquipment() {
     try {
-        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdat.desc`;
+        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdAt.desc`;
         const data = await supabaseFetch(url);
         currentDevices = data || [];
         updateSyncStatus(true);
@@ -220,7 +220,7 @@ async function deleteEquipmentFromDB(id) {
         updateSyncStatus(false);
         currentDevices = currentDevices.filter(d => d.id != id);
         localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
-        throw new Error('Удалено локально (будет синхронизировано позже)');
+        throw new Error('Удалено локально');
     }
 }
 
@@ -371,37 +371,44 @@ async function renderEquipmentGrid() {
     });
 }
 
-async function addMedicalEquipment(e) {
-    e.preventDefault();
+async function addMedicalEquipment(event) {
+    event.preventDefault();
     
-    const name = document.getElementById('eqName').value.trim();
-    if (!name) return alert('Введите наименование');
+    const nameValue = document.getElementById('eqName').value.trim();
+    if (!nameValue) {
+        alert("Введите наименование оборудования");
+        return;
+    }
     
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Сохранение...';
     
     const newDevice = {
-    id: generateId(),
-    name: nameValue,
-    department: document.getElementById('eqDepartment').value.trim() || "—",
-    serialNumber: document.getElementById('eqSerial').value.trim() || "—",
-    installDate: document.getElementById('eqInstallDate').value || "—",
-    lastInspection: document.getElementById('eqLastInspection').value || "—",
-    nextInspection: document.getElementById('eqNextInspection').value || "—",
-    manual: document.getElementById('eqManual').value.trim() || "—",
-    notes: document.getElementById('eqNotes').value.trim() || "—",
-    createdat: new Date().toLocaleString('ru-RU')  // ← маленькими буквами
-};
+        id: generateId(),
+        name: nameValue,
+        department: document.getElementById('eqDepartment').value.trim() || "—",
+        serialNumber: document.getElementById('eqSerial').value.trim() || "—",
+        installDate: document.getElementById('eqInstallDate').value || "—",
+        lastInspection: document.getElementById('eqLastInspection').value || "—",
+        nextInspection: document.getElementById('eqNextInspection').value || "—",
+        manual: document.getElementById('eqManual').value.trim() || "—",
+        notes: document.getElementById('eqNotes').value.trim() || "—",
+        createdAt: new Date().toLocaleString('ru-RU')
+    };
     
     try {
         await addEquipmentToDB(newDevice);
         document.getElementById('createEquipmentForm').reset();
         switchToTab('view');
         await renderEquipmentGrid();
-        alert(`✅ Оборудование "${name}" добавлено!`);
-    } catch (err) {
-        alert(err.message);
+        alert(`✅ Оборудование "${nameValue}" добавлено!`);
+    } catch (error) {
+        alert(error.message);
+        if (error.message.includes('локально')) {
+            switchToTab('view');
+            await renderEquipmentGrid();
+        }
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = '✨ Сохранить и создать QR';

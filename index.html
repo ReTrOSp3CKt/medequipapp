@@ -161,7 +161,12 @@ let currentDevices = [];
 
 // Функция запроса к Supabase
 async function supabaseQuery(method, path, body = null) {
+    // Формируем правильный URL
     const url = `${SUPABASE_URL}/rest/v1/${path}`;
+    
+    console.log('Запрос к:', url);
+    console.log('Метод:', method);
+    
     const options = {
         method: method,
         headers: {
@@ -177,11 +182,17 @@ async function supabaseQuery(method, path, body = null) {
     
     try {
         const response = await fetch(url, options);
+        console.log('Статус ответа:', response.status);
+        
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            const errorText = await response.text();
+            console.error('Текст ошибки:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
         }
+        
         if (method === 'DELETE') return true;
         const data = await response.json();
+        console.log('Получено записей:', Array.isArray(data) ? data.length : 1);
         return data;
     } catch (error) {
         console.error('Supabase error:', error);

@@ -133,16 +133,16 @@
 </div>
 
 <script>
-// ============================================
-// ПОДКЛЮЧЕНИЕ К SUPABASE
-// ============================================
+
+// ПОДКЛЮЧЕНИЕ К БАЗК ДОЛБАЁБ
+
 const SUPABASE_URL = 'https://rbdenrzeikucusoeyjga.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZGVucnplaWt1Y3Vzb2V5amdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzYzNjUsImV4cCI6MjA5NDI1MjM2NX0.ISgVQGMZYGIVkygS4ABFL_VQ0KiIZwXfOed6hg5yPho';
 
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 let currentDevices = [];
 
-// Универсальная функция запроса
+// ЭТО ЗАПРОС ДОЛБАЁБ
 async function supabaseFetch(url, options = {}) {
     const response = await fetch(url, {
         ...options,
@@ -163,7 +163,7 @@ async function supabaseFetch(url, options = {}) {
     return await response.json();
 }
 
-// Загрузка всех записей
+// Загрузка записей, ДОЛБАЁБ
 async function fetchAllEquipment() {
     try {
         const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdAt.desc`;
@@ -184,7 +184,7 @@ async function fetchAllEquipment() {
     }
 }
 
-// Добавление записи
+// Добавление записи ДОЛБАЁБ
 async function addEquipmentToDB(device) {
     try {
         const url = `${SUPABASE_URL}/rest/v1/equipment`;
@@ -207,7 +207,7 @@ async function addEquipmentToDB(device) {
     }
 }
 
-// Удаление записи
+// Удаление записи ДОЛБ...мне лень
 async function deleteEquipmentFromDB(id) {
     try {
         const url = `${SUPABASE_URL}/rest/v1/equipment?id=eq.${id}`;
@@ -278,10 +278,10 @@ function openEquipmentCard(equipmentId) {
     modalBody.innerHTML = `
         <div class="modal-detail-row"><div class="modal-detail-label">📋 Наименование</div><div class="modal-detail-value"><strong>${escapeHtml(device.name)}</strong></div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">👤 Отделение</div><div class="modal-detail-value">${escapeHtml(device.department || '—')}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">🔢 Серийный номер</div><div class="modal-detail-value">${escapeHtml(device.serialNumber || '—')}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">📅 Дата установки</div><div class="modal-detail-value">${escapeHtml(device.installDate || '—')}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">📅 Последний техосмотр</div><div class="modal-detail-value">${escapeHtml(device.lastInspection || '—')}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">📅 Следующий техосмотр</div><div class="modal-detail-value">${escapeHtml(device.nextInspection || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">🔢 Серийный номер</div><div class="modal-detail-value">${escapeHtml(device.serialnumber || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📅 Дата установки</div><div class="modal-detail-value">${escapeHtml(device.installdate || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📅 Последний техосмотр</div><div class="modal-detail-value">${escapeHtml(device.lastinspection || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📅 Следующий техосмотр</div><div class="modal-detail-value">${escapeHtml(device.nextinspection || '—')}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📖 Руководство</div><div class="modal-detail-value">${escapeHtml(device.manual || '—')}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📝 Заметки</div><div class="modal-detail-value">${escapeHtml(device.notes || '—')}</div></div>
         <div class="qr-code-in-modal"><div id="modalQRContainer"></div></div>
@@ -336,17 +336,17 @@ async function renderEquipmentGrid() {
         card.className = 'equip-card';
         card.onclick = (e) => { if (!e.target.classList.contains('delete-equip')) openEquipmentCard(device.id); };
         card.innerHTML = `
-            <div class="card-header-med">
-                <h3>${escapeHtml(device.name)}</h3>
-                <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
-            </div>
-            <div class="card-body-med">
-                <div class="info-row"><span class="info-label">Серийный номер:</span> ${escapeHtml(device.serialNumber || '—')}</div>
-                <div class="info-row"><span class="info-label">Следующий осмотр:</span> ${escapeHtml(device.nextInspection || '—')}</div>
-                <div class="qr-box" id="${qrId}"></div>
-                <button class="delete-equip" data-id="${device.id}">🗑 Удалить</button>
-            </div>
-        `;
+    <div class="card-header-med">
+        <h3>${escapeHtml(device.name)}</h3>
+        <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
+    </div>
+    <div class="card-body-med">
+        <div class="info-row"><span class="info-label">Серийный номер:</span> ${escapeHtml(device.serialnumber || '—')}</div>
+        <div class="info-row"><span class="info-label">Следующий осмотр:</span> ${escapeHtml(device.nextinspection || '—')}</div>
+        <div class="qr-box" id="${qrId}"></div>
+        <button class="delete-equip" data-id="${device.id}">🗑 Удалить</button>
+    </div>
+`;
         container.appendChild(card);
         setTimeout(() => generateQRCode(qrId, device.id), 50);
     });
@@ -385,17 +385,17 @@ async function addMedicalEquipment(event) {
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Сохранение...';
     
-   const newDevice = {
+  const newDevice = {
     id: generateId(),
     name: nameValue,
     department: document.getElementById('eqDepartment').value.trim() || "—",
-    serialnumber: document.getElementById('eqSerial').value.trim() || "—",     // ← маленькими
-    installdate: document.getElementById('eqInstallDate').value || "—",       // ← маленькими
-    lastinspection: document.getElementById('eqLastInspection').value || "—", // ← маленькими
-    nextinspection: document.getElementById('eqNextInspection').value || "—", // ← маленькими
+    serialnumber: document.getElementById('eqSerial').value.trim() || "—",
+    installdate: document.getElementById('eqInstallDate').value || "—",
+    lastinspection: document.getElementById('eqLastInspection').value || "—",
+    nextinspection: document.getElementById('eqNextInspection').value || "—",
     manual: document.getElementById('eqManual').value.trim() || "—",
     notes: document.getElementById('eqNotes').value.trim() || "—",
-    createdAt: new Date().toLocaleString('ru-RU')  // ← с большой C и большой A
+    created_at: new Date().toLocaleString('ru-RU')
 };
     
     try {

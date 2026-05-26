@@ -192,7 +192,7 @@ async function supabaseFetch(url, options = {}) {
 // Загрузка всех записей
 async function fetchAllEquipment() {
     try {
-        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=created_at.desc`;
+     const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdAt.desc`;
         const data = await supabaseFetch(url);
         currentDevices = data || [];
         updateSyncStatus(true);
@@ -570,7 +570,7 @@ async function addMedicalEquipment(event) {
         manual: document.getElementById('eqManual').value.trim() || "—",
         notes: document.getElementById('eqNotes').value.trim() || "—",
         file_url: fileUrl || null,
-        created_at: new Date().toLocaleString('ru-RU')
+        createdAt: new Date().toLocaleString('ru-RU')
     };
     
     try {

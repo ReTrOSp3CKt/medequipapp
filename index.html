@@ -36,7 +36,12 @@
         .info-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #e5f0f4; padding: 6px 0; font-size: 0.9rem; }
         .info-label { font-weight: 700; color: #2b7c90; }
         .qr-box { display: flex; justify-content: center; align-items: center; background: #fefefe; margin: 12px 0 8px; padding: 12px; border-radius: 24px; border: 1px solid #ddecF2; min-height: 150px; }
-        .delete-equip { background: #fee9e9; border: none; color: #bc5a5a; padding: 8px 12px; border-radius: 40px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 12px; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 12px; }
+        .edit-equip, .delete-equip { flex: 1; padding: 8px 12px; border-radius: 40px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .edit-equip { background: #e8f4f7; color: #1a7e91; }
+        .edit-equip:hover { background: #d4eaf0; }
+        .delete-equip { background: #fee9e9; color: #bc5a5a; }
+        .delete-equip:hover { background: #fad1d1; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
         .modal-content { background-color: #fff; margin: 5% auto; padding: 0; border-radius: 32px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; }
         .modal-header { background: linear-gradient(105deg, #0f4c5f 0%, #166d7c 100%); color: white; padding: 20px 24px; border-radius: 32px 32px 0 0; display: flex; justify-content: space-between; align-items: center; }
@@ -51,8 +56,12 @@
         label { font-weight: 600; color: #1c6a7c; margin-bottom: 8px; display: block; font-size: 0.9rem; }
         input, textarea { width: 100%; padding: 12px 16px; border-radius: 20px; border: 1.5px solid #d4e3ea; background: white; font-size: 0.95rem; }
         .btn-primary { background: #1a7e91; color: white; border: none; width: 100%; padding: 14px 20px; border-radius: 50px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-secondary { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .empty-state { text-align: center; background: #f4fbfe; padding: 45px 20px; border-radius: 36px; color: #568b9b; }
         footer { text-align: center; padding: 18px; font-size: 0.75rem; color: #7f9ea8; background: #fbfefe; border-top: 1px solid #deeef3; }
+        .file-link { display: inline-block; margin-top: 10px; color: #1a7e91; text-decoration: none; }
+        .file-link:hover { text-decoration: underline; }
         @media (max-width: 680px) { .med-tabs { padding: 0 12px; } .tab-pane { padding: 20px; } .equip-grid { gap: 18px; } }
     </style>
 </head>
@@ -108,8 +117,13 @@
                     <input type="date" id="eqNextInspection">
                 </div>
                 <div class="form-group">
-                    <label>📖 Руководство</label>
-                    <textarea id="eqManual" rows="3"></textarea>
+                    <label>📖 Руководство (ссылка на PDF)</label>
+                    <input type="url" id="eqManual" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>📎 Файл (PDF)</label>
+                    <input type="file" id="eqFile" accept=".pdf">
+                    <small style="color: #739eac;">PDF файл будет сохранён в облаке</small>
                 </div>
                 <div class="form-group">
                     <label>📝 Заметки</label>
@@ -122,6 +136,7 @@
     <footer>MedEquip QR — облачная синхронизация</footer>
 </div>
 
+<!-- Модальное окно просмотра -->
 <div id="equipmentModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -132,17 +147,28 @@
     </div>
 </div>
 
+<!-- Модальное окно редактирования -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>✏️ Редактирование</h2>
+            <button class="close-edit-modal">&times;</button>
+        </div>
+        <div class="modal-body" id="editModalBody"></div>
+    </div>
+</div>
+
 <script>
-
-// ПОДКЛЮЧЕНИЕ К БАЗК ДОЛБАЁБ
-
+// ============================================
+// ПОДКЛЮЧЕНИЕ К SUPABASE
+// ============================================
 const SUPABASE_URL = 'https://rbdenrzeikucusoeyjga.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZGVucnplaWt1Y3Vzb2V5amdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzYzNjUsImV4cCI6MjA5NDI1MjM2NX0.ISgVQGMZYGIVkygS4ABFL_VQ0KiIZwXfOed6hg5yPho';
 
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 let currentDevices = [];
 
-// ЭТО ЗАПРОС ДОЛБАЁБ
+// Универсальная функция запроса
 async function supabaseFetch(url, options = {}) {
     const response = await fetch(url, {
         ...options,
@@ -163,10 +189,10 @@ async function supabaseFetch(url, options = {}) {
     return await response.json();
 }
 
-// Загрузка записей, ДОЛБАЁБ
+// Загрузка всех записей
 async function fetchAllEquipment() {
     try {
-        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdAt.desc`;
+        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=created_at.desc`;
         const data = await supabaseFetch(url);
         currentDevices = data || [];
         updateSyncStatus(true);
@@ -184,11 +210,10 @@ async function fetchAllEquipment() {
     }
 }
 
-// Добавление записи ДОЛБАЁБ
+// Добавление записи
 async function addEquipmentToDB(device) {
     try {
         const url = `${SUPABASE_URL}/rest/v1/equipment`;
-        console.log('Отправляем:', device); // Для отладки
         await supabaseFetch(url, {
             method: 'POST',
             body: JSON.stringify(device)
@@ -207,7 +232,31 @@ async function addEquipmentToDB(device) {
     }
 }
 
-// Удаление записи ДОЛБ...мне лень
+// Обновление записи
+async function updateEquipmentInDB(id, updates) {
+    try {
+        const url = `${SUPABASE_URL}/rest/v1/equipment?id=eq.${id}`;
+        await supabaseFetch(url, {
+            method: 'PATCH',
+            body: JSON.stringify(updates)
+        });
+        
+        // Обновляем локальный массив
+        const index = currentDevices.findIndex(d => d.id == id);
+        if (index !== -1) {
+            currentDevices[index] = { ...currentDevices[index], ...updates };
+        }
+        localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
+        updateSyncStatus(true);
+        return true;
+    } catch (error) {
+        console.error('Update error:', error);
+        updateSyncStatus(false);
+        throw new Error('Не удалось обновить');
+    }
+}
+
+// Удаление записи
 async function deleteEquipmentFromDB(id) {
     try {
         const url = `${SUPABASE_URL}/rest/v1/equipment?id=eq.${id}`;
@@ -223,6 +272,29 @@ async function deleteEquipmentFromDB(id) {
         localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
         throw new Error('Удалено локально');
     }
+}
+
+// Загрузка файла в Supabase Storage
+async function uploadFile(file) {
+    if (!file) return null;
+    
+    const fileName = `${Date.now()}_${file.name}`;
+    const url = `${SUPABASE_URL}/storage/v1/object/equipment-files/${fileName}`;
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: file
+    });
+    
+    if (!response.ok) {
+        throw new Error('Ошибка загрузки файла');
+    }
+    
+    return `${SUPABASE_URL}/storage/v1/object/public/equipment-files/${fileName}`;
 }
 
 function updateSyncStatus(online) {
@@ -275,6 +347,8 @@ function openEquipmentCard(equipmentId) {
     const modal = document.getElementById('equipmentModal');
     const modalBody = document.getElementById('modalBody');
     
+    const fileLink = device.file_url ? `<a href="${device.file_url}" target="_blank" class="file-link">📄 Скачать PDF</a>` : '—';
+    
     modalBody.innerHTML = `
         <div class="modal-detail-row"><div class="modal-detail-label">📋 Наименование</div><div class="modal-detail-value"><strong>${escapeHtml(device.name)}</strong></div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">👤 Отделение</div><div class="modal-detail-value">${escapeHtml(device.department || '—')}</div></div>
@@ -282,7 +356,8 @@ function openEquipmentCard(equipmentId) {
         <div class="modal-detail-row"><div class="modal-detail-label">📅 Дата установки</div><div class="modal-detail-value">${escapeHtml(device.installdate || '—')}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📅 Последний техосмотр</div><div class="modal-detail-value">${escapeHtml(device.lastinspection || '—')}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📅 Следующий техосмотр</div><div class="modal-detail-value">${escapeHtml(device.nextinspection || '—')}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">📖 Руководство</div><div class="modal-detail-value">${escapeHtml(device.manual || '—')}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📖 Руководство</div><div class="modal-detail-value">${device.manual && device.manual !== '—' ? `<a href="${device.manual}" target="_blank">Открыть PDF</a>` : '—'}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📎 Прикреплённый файл</div><div class="modal-detail-value">${fileLink}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📝 Заметки</div><div class="modal-detail-value">${escapeHtml(device.notes || '—')}</div></div>
         <div class="qr-code-in-modal"><div id="modalQRContainer"></div></div>
     `;
@@ -304,6 +379,82 @@ function openEquipmentCard(equipmentId) {
     }, 100);
 }
 
+function openEditModal(deviceId) {
+    const device = currentDevices.find(d => d.id == deviceId);
+    if (!device) return;
+    
+    const modal = document.getElementById('editModal');
+    const modalBody = document.getElementById('editModalBody');
+    
+    modalBody.innerHTML = `
+        <form id="editForm">
+            <div class="form-group">
+                <label>📋 Наименование</label>
+                <input type="text" id="editName" value="${escapeHtml(device.name)}" required>
+            </div>
+            <div class="form-group">
+                <label>👤 Отделение</label>
+                <input type="text" id="editDepartment" value="${escapeHtml(device.department || '')}">
+            </div>
+            <div class="form-group">
+                <label>🔢 Серийный номер</label>
+                <input type="text" id="editSerial" value="${escapeHtml(device.serialnumber || '')}">
+            </div>
+            <div class="form-group">
+                <label>📅 Дата установки</label>
+                <input type="date" id="editInstallDate" value="${device.installdate && device.installdate !== '—' ? device.installdate : ''}">
+            </div>
+            <div class="form-group">
+                <label>📅 Последний техосмотр</label>
+                <input type="date" id="editLastInspection" value="${device.lastinspection && device.lastinspection !== '—' ? device.lastinspection : ''}">
+            </div>
+            <div class="form-group">
+                <label>📅 Следующий техосмотр</label>
+                <input type="date" id="editNextInspection" value="${device.nextinspection && device.nextinspection !== '—' ? device.nextinspection : ''}">
+            </div>
+            <div class="form-group">
+                <label>📖 Руководство (ссылка)</label>
+                <input type="url" id="editManual" value="${device.manual && device.manual !== '—' ? device.manual : ''}">
+            </div>
+            <div class="form-group">
+                <label>📝 Заметки</label>
+                <textarea id="editNotes" rows="3">${escapeHtml(device.notes && device.notes !== '—' ? device.notes : '')}</textarea>
+            </div>
+            <button type="submit" class="btn-primary">💾 Сохранить изменения</button>
+            <button type="button" class="btn-secondary close-edit-btn">❌ Отмена</button>
+        </form>
+    `;
+    
+    modal.style.display = 'block';
+    
+    document.getElementById('editForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const updates = {
+            name: document.getElementById('editName').value.trim(),
+            department: document.getElementById('editDepartment').value.trim() || "—",
+            serialnumber: document.getElementById('editSerial').value.trim() || "—",
+            installdate: document.getElementById('editInstallDate').value || "—",
+            lastinspection: document.getElementById('editLastInspection').value || "—",
+            nextinspection: document.getElementById('editNextInspection').value || "—",
+            manual: document.getElementById('editManual').value.trim() || "—",
+            notes: document.getElementById('editNotes').value.trim() || "—"
+        };
+        
+        try {
+            await updateEquipmentInDB(deviceId, updates);
+            modal.style.display = 'none';
+            await renderEquipmentGrid();
+            alert('Изменения сохранены!');
+        } catch (error) {
+            alert('Ошибка сохранения: ' + error.message);
+        }
+    };
+    
+    modal.querySelector('.close-edit-btn').onclick = () => modal.style.display = 'none';
+    modal.querySelector('.close-edit-modal').onclick = () => modal.style.display = 'none';
+}
+
 async function renderEquipmentGrid() {
     const container = document.getElementById("equipmentListGrid");
     const searchInput = document.getElementById('searchInput');
@@ -317,7 +468,7 @@ async function renderEquipmentGrid() {
         const term = searchTerm.toLowerCase();
         return (d.name && d.name.toLowerCase().includes(term)) ||
                (d.department && d.department.toLowerCase().includes(term)) ||
-               (d.serialNumber && d.serialNumber.toLowerCase().includes(term));
+               (d.serialnumber && d.serialnumber.toLowerCase().includes(term));
     });
     
     const countSpan = document.getElementById('resultsCount');
@@ -334,21 +485,30 @@ async function renderEquipmentGrid() {
         const qrId = 'qr_' + device.id + '_' + idx;
         const card = document.createElement('div');
         card.className = 'equip-card';
-        card.onclick = (e) => { if (!e.target.classList.contains('delete-equip')) openEquipmentCard(device.id); };
         card.innerHTML = `
-    <div class="card-header-med">
-        <h3>${escapeHtml(device.name)}</h3>
-        <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
-    </div>
-    <div class="card-body-med">
-        <div class="info-row"><span class="info-label">Серийный номер:</span> ${escapeHtml(device.serialnumber || '—')}</div>
-        <div class="info-row"><span class="info-label">Следующий осмотр:</span> ${escapeHtml(device.nextinspection || '—')}</div>
-        <div class="qr-box" id="${qrId}"></div>
-        <button class="delete-equip" data-id="${device.id}">🗑 Удалить</button>
-    </div>
-`;
+            <div class="card-header-med">
+                <h3>${escapeHtml(device.name)}</h3>
+                <span class="badge-department">${escapeHtml(device.department ? device.department.split(',')[0] : 'Без отделения')}</span>
+            </div>
+            <div class="card-body-med">
+                <div class="info-row"><span class="info-label">Серийный номер:</span> ${escapeHtml(device.serialnumber || '—')}</div>
+                <div class="info-row"><span class="info-label">Следующий осмотр:</span> ${escapeHtml(device.nextinspection || '—')}</div>
+                <div class="qr-box" id="${qrId}"></div>
+                <div class="action-buttons">
+                    <button class="edit-equip" data-id="${device.id}">✏️ Редактировать</button>
+                    <button class="delete-equip" data-id="${device.id}">🗑 Удалить</button>
+                </div>
+            </div>
+        `;
         container.appendChild(card);
         setTimeout(() => generateQRCode(qrId, device.id), 50);
+    });
+    
+    document.querySelectorAll('.edit-equip').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            openEditModal(btn.getAttribute('data-id'));
+        };
     });
     
     document.querySelectorAll('.delete-equip').forEach(btn => {
@@ -385,18 +545,33 @@ async function addMedicalEquipment(event) {
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Сохранение...';
     
-  const newDevice = {
-    id: generateId(),
-    name: nameValue,
-    department: document.getElementById('eqDepartment').value.trim() || "—",
-    serialnumber: document.getElementById('eqSerial').value.trim() || "—",
-    installdate: document.getElementById('eqInstallDate').value || "—",
-    lastinspection: document.getElementById('eqLastInspection').value || "—",
-    nextinspection: document.getElementById('eqNextInspection').value || "—",
-    manual: document.getElementById('eqManual').value.trim() || "—",
-    notes: document.getElementById('eqNotes').value.trim() || "—",
-    created_at: new Date().toLocaleString('ru-RU')
-};
+    // Загружаем файл если есть
+    let fileUrl = null;
+    const fileInput = document.getElementById('eqFile');
+    if (fileInput.files.length > 0) {
+        try {
+            fileUrl = await uploadFile(fileInput.files[0]);
+        } catch (error) {
+            alert('Ошибка загрузки файла: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = '✨ Сохранить и создать QR';
+            return;
+        }
+    }
+    
+    const newDevice = {
+        id: generateId(),
+        name: nameValue,
+        department: document.getElementById('eqDepartment').value.trim() || "—",
+        serialnumber: document.getElementById('eqSerial').value.trim() || "—",
+        installdate: document.getElementById('eqInstallDate').value || "—",
+        lastinspection: document.getElementById('eqLastInspection').value || "—",
+        nextinspection: document.getElementById('eqNextInspection').value || "—",
+        manual: document.getElementById('eqManual').value.trim() || "—",
+        notes: document.getElementById('eqNotes').value.trim() || "—",
+        file_url: fileUrl || null,
+        created_at: new Date().toLocaleString('ru-RU')
+    };
     
     try {
         await addEquipmentToDB(newDevice);

@@ -133,7 +133,7 @@
     <footer>MedEquip QR — облачная синхронизация</footer>
 </div>
 
-<!-- Модальное окно просмотра -->
+<!-- окно просмотра -->
 <div id="equipmentModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -144,7 +144,7 @@
     </div>
 </div>
 
-<!-- Модальное окно редактирования -->
+<!-- окно редактирования -->
 <div id="editModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -156,16 +156,16 @@
 </div>
 
 <script>
-// ============================================
-// ПОДКЛЮЧЕНИЕ К SUPABASE
-// ============================================
+
+// ПОДКЛЮЧЕНИЕ К БД
+
 const SUPABASE_URL = 'https://rbdenrzeikucusoeyjga.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZGVucnplaWt1Y3Vzb2V5amdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzYzNjUsImV4cCI6MjA5NDI1MjM2NX0.ISgVQGMZYGIVkygS4ABFL_VQ0KiIZwXfOed6hg5yPho';
 
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 let currentDevices = [];
 
-// Функция запроса к Supabase
+// Функция запроса к БД
 async function supabaseFetch(url, options = {}) {
     const response = await fetch(url, {
         ...options,
@@ -207,7 +207,7 @@ async function fetchAllEquipment() {
     }
 }
 
-// Загрузка файла в Supabase Storage
+// Загрузка файла в БД
 async function uploadFile(file) {
     if (!file) return null;
     

@@ -57,11 +57,12 @@
         input, textarea { width: 100%; padding: 12px 16px; border-radius: 20px; border: 1.5px solid #d4e3ea; background: white; font-size: 0.95rem; }
         .btn-primary { background: #1a7e91; color: white; border: none; width: 100%; padding: 14px 20px; border-radius: 50px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 10px; }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-secondary { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-secondary { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 50px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%; }
         .empty-state { text-align: center; background: #f4fbfe; padding: 45px 20px; border-radius: 36px; color: #568b9b; }
         footer { text-align: center; padding: 18px; font-size: 0.75rem; color: #7f9ea8; background: #fbfefe; border-top: 1px solid #deeef3; }
         .file-link { display: inline-block; margin-top: 10px; color: #1a7e91; text-decoration: none; }
         .file-link:hover { text-decoration: underline; }
+        .file-name { font-size: 12px; color: #6c757d; margin-top: 5px; }
         @media (max-width: 680px) { .med-tabs { padding: 0 12px; } .tab-pane { padding: 20px; } .equip-grid { gap: 18px; } }
     </style>
 </head>
@@ -117,13 +118,9 @@
                     <input type="date" id="eqNextInspection">
                 </div>
                 <div class="form-group">
-                    <label>📖 Руководство (ссылка на PDF)</label>
-                    <input type="url" id="eqManual" placeholder="https://...">
-                </div>
-                <div class="form-group">
-                    <label>📎 Файл (PDF)</label>
+                    <label>📎 Прикрепить PDF файл</label>
                     <input type="file" id="eqFile" accept=".pdf">
-                    <small style="color: #739eac;">PDF файл будет сохранён в облаке</small>
+                    <small class="file-name">Выберите PDF файл</small>
                 </div>
                 <div class="form-group">
                     <label>📝 Заметки</label>
@@ -168,7 +165,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const BASE_URL = window.location.href.split('?')[0].split('#')[0];
 let currentDevices = [];
 
-// Универсальная функция запроса
+// Функция запроса к Supabase
 async function supabaseFetch(url, options = {}) {
     const response = await fetch(url, {
         ...options,
@@ -182,7 +179,7 @@ async function supabaseFetch(url, options = {}) {
     
     if (!response.ok) {
         const error = await response.text();
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`HTTP ${response.status}: ${error.substring(0, 100)}`);
     }
     
     if (response.status === 204) return null;
@@ -192,7 +189,7 @@ async function supabaseFetch(url, options = {}) {
 // Загрузка всех записей
 async function fetchAllEquipment() {
     try {
-     const url = `${SUPABASE_URL}/rest/v1/equipment?select=*&order=createdAt.desc`;
+        const url = `${SUPABASE_URL}/rest/v1/equipment?select=*`;
         const data = await supabaseFetch(url);
         currentDevices = data || [];
         updateSyncStatus(true);
@@ -208,6 +205,32 @@ async function fetchAllEquipment() {
         }
         return [];
     }
+}
+
+// Загрузка файла в Supabase Storage
+async function uploadFile(file) {
+    if (!file) return null;
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 8)}.${fileExt}`;
+    const filePath = `equipment-files/${fileName}`;
+    
+    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${filePath}`, {
+        method: 'POST',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: file
+    });
+    
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Ошибка загрузки: ${error}`);
+    }
+    
+    const result = await response.json();
+    return `${SUPABASE_URL}/storage/v1/object/public/${filePath}`;
 }
 
 // Добавление записи
@@ -228,7 +251,7 @@ async function addEquipmentToDB(device) {
         device.offlineMode = true;
         currentDevices = [device, ...currentDevices];
         localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
-        throw new Error('Сохранено локально (нет связи с сервером)');
+        throw new Error('Сохранено локально');
     }
 }
 
@@ -241,7 +264,6 @@ async function updateEquipmentInDB(id, updates) {
             body: JSON.stringify(updates)
         });
         
-        // Обновляем локальный массив
         const index = currentDevices.findIndex(d => d.id == id);
         if (index !== -1) {
             currentDevices[index] = { ...currentDevices[index], ...updates };
@@ -272,29 +294,6 @@ async function deleteEquipmentFromDB(id) {
         localStorage.setItem('medequip_backup', JSON.stringify(currentDevices));
         throw new Error('Удалено локально');
     }
-}
-
-// Загрузка файла в Supabase Storage
-async function uploadFile(file) {
-    if (!file) return null;
-    
-    const fileName = `${Date.now()}_${file.name}`;
-    const url = `${SUPABASE_URL}/storage/v1/object/equipment-files/${fileName}`;
-    
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
-        body: file
-    });
-    
-    if (!response.ok) {
-        throw new Error('Ошибка загрузки файла');
-    }
-    
-    return `${SUPABASE_URL}/storage/v1/object/public/equipment-files/${fileName}`;
 }
 
 function updateSyncStatus(online) {
@@ -337,6 +336,7 @@ function generateQRCode(containerId, equipmentId) {
     });
 }
 
+// Открытие карточки для просмотра
 function openEquipmentCard(equipmentId) {
     const device = currentDevices.find(d => d.id == equipmentId);
     if (!device) {
@@ -347,7 +347,11 @@ function openEquipmentCard(equipmentId) {
     const modal = document.getElementById('equipmentModal');
     const modalBody = document.getElementById('modalBody');
     
-    const fileLink = device.file_url ? `<a href="${device.file_url}" target="_blank" class="file-link">📄 Скачать PDF</a>` : '—';
+    // Ссылка на файл, если есть
+    let fileHtml = '—';
+    if (device.file_url) {
+        fileHtml = `<a href="${device.file_url}" target="_blank" class="file-link">📄 Скачать PDF</a>`;
+    }
     
     modalBody.innerHTML = `
         <div class="modal-detail-row"><div class="modal-detail-label">📋 Наименование</div><div class="modal-detail-value"><strong>${escapeHtml(device.name)}</strong></div></div>
@@ -356,8 +360,7 @@ function openEquipmentCard(equipmentId) {
         <div class="modal-detail-row"><div class="modal-detail-label">📅 Дата установки</div><div class="modal-detail-value">${escapeHtml(device.installdate || '—')}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📅 Последний техосмотр</div><div class="modal-detail-value">${escapeHtml(device.lastinspection || '—')}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📅 Следующий техосмотр</div><div class="modal-detail-value">${escapeHtml(device.nextinspection || '—')}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">📖 Руководство</div><div class="modal-detail-value">${device.manual && device.manual !== '—' ? `<a href="${device.manual}" target="_blank">Открыть PDF</a>` : '—'}</div></div>
-        <div class="modal-detail-row"><div class="modal-detail-label">📎 Прикреплённый файл</div><div class="modal-detail-value">${fileLink}</div></div>
+        <div class="modal-detail-row"><div class="modal-detail-label">📎 Прикреплённый файл</div><div class="modal-detail-value">${fileHtml}</div></div>
         <div class="modal-detail-row"><div class="modal-detail-label">📝 Заметки</div><div class="modal-detail-value">${escapeHtml(device.notes || '—')}</div></div>
         <div class="qr-code-in-modal"><div id="modalQRContainer"></div></div>
     `;
@@ -379,6 +382,7 @@ function openEquipmentCard(equipmentId) {
     }, 100);
 }
 
+// Открытие окна редактирования
 function openEditModal(deviceId) {
     const device = currentDevices.find(d => d.id == deviceId);
     if (!device) return;
@@ -413,10 +417,6 @@ function openEditModal(deviceId) {
                 <input type="date" id="editNextInspection" value="${device.nextinspection && device.nextinspection !== '—' ? device.nextinspection : ''}">
             </div>
             <div class="form-group">
-                <label>📖 Руководство (ссылка)</label>
-                <input type="url" id="editManual" value="${device.manual && device.manual !== '—' ? device.manual : ''}">
-            </div>
-            <div class="form-group">
                 <label>📝 Заметки</label>
                 <textarea id="editNotes" rows="3">${escapeHtml(device.notes && device.notes !== '—' ? device.notes : '')}</textarea>
             </div>
@@ -437,7 +437,6 @@ function openEditModal(deviceId) {
             installdate: document.getElementById('editInstallDate').value || "—",
             lastinspection: document.getElementById('editLastInspection').value || "—",
             nextinspection: document.getElementById('editNextInspection').value || "—",
-            manual: document.getElementById('editManual').value.trim() || "—",
             notes: document.getElementById('editNotes').value.trim() || "—"
         };
         
@@ -455,6 +454,7 @@ function openEditModal(deviceId) {
     modal.querySelector('.close-edit-modal').onclick = () => modal.style.display = 'none';
 }
 
+// Отображение списка оборудования
 async function renderEquipmentGrid() {
     const container = document.getElementById("equipmentListGrid");
     const searchInput = document.getElementById('searchInput');
@@ -500,38 +500,37 @@ async function renderEquipmentGrid() {
                 </div>
             </div>
         `;
-        container.appendChild(card);
-        setTimeout(() => generateQRCode(qrId, device.id), 50);
-    });
-    
-    document.querySelectorAll('.edit-equip').forEach(btn => {
-        btn.onclick = (e) => {
+        
+        card.querySelector('.edit-equip').onclick = (e) => {
             e.stopPropagation();
-            openEditModal(btn.getAttribute('data-id'));
+            openEditModal(device.id);
         };
-    });
-    
-    document.querySelectorAll('.delete-equip').forEach(btn => {
-        btn.onclick = async (e) => {
+        
+        card.querySelector('.delete-equip').onclick = async (e) => {
             e.stopPropagation();
-            const id = btn.getAttribute('data-id');
             if (confirm('Удалить оборудование?')) {
-                btn.disabled = true;
-                btn.textContent = '⌛ Удаление...';
                 try {
-                    await deleteEquipmentFromDB(id);
+                    await deleteEquipmentFromDB(device.id);
                     await renderEquipmentGrid();
                     alert('Оборудование удалено');
                 } catch (err) {
                     alert(err.message);
-                    btn.disabled = false;
-                    btn.textContent = '🗑 Удалить';
                 }
             }
         };
+        
+        card.onclick = (e) => {
+            if (!e.target.classList.contains('edit-equip') && !e.target.classList.contains('delete-equip')) {
+                openEquipmentCard(device.id);
+            }
+        };
+        
+        container.appendChild(card);
+        setTimeout(() => generateQRCode(qrId, device.id), 50);
     });
 }
 
+// Добавление нового оборудования
 async function addMedicalEquipment(event) {
     event.preventDefault();
     
@@ -545,7 +544,6 @@ async function addMedicalEquipment(event) {
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Сохранение...';
     
-    // Загружаем файл если есть
     let fileUrl = null;
     const fileInput = document.getElementById('eqFile');
     if (fileInput.files.length > 0) {
@@ -567,10 +565,9 @@ async function addMedicalEquipment(event) {
         installdate: document.getElementById('eqInstallDate').value || "—",
         lastinspection: document.getElementById('eqLastInspection').value || "—",
         nextinspection: document.getElementById('eqNextInspection').value || "—",
-        manual: document.getElementById('eqManual').value.trim() || "—",
         notes: document.getElementById('eqNotes').value.trim() || "—",
-        file_url: fileUrl || null,
-        createdAt: new Date().toLocaleString('ru-RU')
+        file_url: fileUrl,
+        created_at: new Date().toLocaleString('ru-RU')
     };
     
     try {
@@ -632,7 +629,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('createEquipmentForm').onsubmit = addMedicalEquipment;
     
     const modal = document.getElementById('equipmentModal');
-    document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
+    const closeModal = document.querySelector('.close-modal');
+    if (closeModal) closeModal.onclick = () => modal.style.display = 'none';
     window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
     
     const search = document.getElementById('searchInput');

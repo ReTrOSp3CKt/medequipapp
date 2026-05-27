@@ -567,7 +567,7 @@ async function addMedicalEquipment(event) {
         nextinspection: document.getElementById('eqNextInspection').value || "—",
         notes: document.getElementById('eqNotes').value.trim() || "—",
         file_url: fileUrl,
-        created_at: new Date().toLocaleString('ru-RU')
+        createdAt: new Date().toLocaleString('ru-RU')
     };
     
     try {
